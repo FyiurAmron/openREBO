@@ -76,7 +76,7 @@ void AIREBOForceField::E_TORSION()
             rij = rji;
             rij_sq = rji_sq;
 
-            wji = Sp(rji, rcmin[itype][jtype], rcmax[itype][jtype]);
+            wji = Sp(rji, rcMin[itype][jtype], rcMax[itype][jtype]);
 
             for (kk = 0; kk < REBO_neighbours_num_i; kk++)
             {
@@ -107,7 +107,7 @@ void AIREBOForceField::E_TORSION()
 
                 rkj_sq = rkj_vec[0] * rkj_vec[0] + rkj_vec[1] * rkj_vec[1] + rkj_vec[2] * rkj_vec[2];
 
-                wki = Sp(rki, rcmin[itype][ktype], rcmax[itype][ktype]);
+                wki = Sp(rki, rcMin[itype][ktype], rcMax[itype][ktype]);
 
                 costmp = 0.5 * ( rij_sq + rki_sq - rkj_sq ) / rij / rki;
                 tspjik = Sp2(costmp, thmin, thmax);
@@ -139,7 +139,7 @@ void AIREBOForceField::E_TORSION()
                     if ( sin234 < TOL )
                         continue;
 
-                    wlj = Sp(rlj, rcmin[jtype][ltype], rcmax[jtype][ltype]);
+                    wlj = Sp(rlj, rcMin[jtype][ltype], rcMax[jtype][ltype]);
 
                     rli_vec[0] = rji_vec[0] + rlj_vec[0];
                     rli_vec[1] = rji_vec[1] + rlj_vec[1];

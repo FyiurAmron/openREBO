@@ -82,14 +82,14 @@ void AIREBOForceField::E_LJ()
                 best = 0.0;
                 testpath = 0;
             }
-            else if ( rji >= rcmax[itype][jtype] )
+            else if ( rji >= rcMax[itype][jtype] )
             {
                 best = 0.0;
                 testpath = 1;
             }
             else
             {
-                best = Sp(rji, rcmin[itype][jtype], rcmax[itype][jtype]);
+                best = Sp(rji, rcMin[itype][jtype], rcMax[itype][jtype]);
                 if ( best < 1.0 )
                     testpath = 1;
                 else
@@ -118,8 +118,8 @@ void AIREBOForceField::E_LJ()
                     rki = REBO_neighbours_bonds_i[kk].r;
                     rki_sq = REBO_neighbours_bonds_i[kk].r_sq;
 
-                    if ( rki_sq < rcmaxsq[itype][ktype] )
-                        wki = Sp(rki, rcmin[itype][ktype], rcmax[itype][ktype]);
+                    if ( rki_sq < rcMaxSq[itype][ktype] )
+                        wki = Sp(rki, rcMin[itype][ktype], rcMax[itype][ktype]);
                     else
                         wki = 0.0;
 
@@ -130,10 +130,10 @@ void AIREBOForceField::E_LJ()
                         rkj_vec[2] = rki_vec[2] - rji_vec[2];
                         rkj_sq = rkj_vec[0] * rkj_vec[0] + rkj_vec[1] * rkj_vec[1] + rkj_vec[2] * rkj_vec[2];
 
-                        if ( rkj_sq < rcmaxsq[ktype][jtype] )
+                        if ( rkj_sq < rcMaxSq[ktype][jtype] )
                         {
                             rkj = sqrt(rkj_sq);
-                            wkj = Sp(rkj, rcmin[ktype][jtype], rcmax[ktype][jtype]);
+                            wkj = Sp(rkj, rcMin[ktype][jtype], rcMax[ktype][jtype]);
                             if ( wki * wkj > best )
                             {
                                 best = wki * wkj;
@@ -163,8 +163,8 @@ void AIREBOForceField::E_LJ()
                             rmk = REBO_neighbours_bonds_k[mm].r;
                             rmk_sq = REBO_neighbours_bonds_k[mm].r_sq;
 
-                            if ( rmk_sq < rcmaxsq[ktype][mtype] )
-                                wmk = Sp(rmk, rcmin[ktype][mtype], rcmax[ktype][mtype]);
+                            if ( rmk_sq < rcMaxSq[ktype][mtype] )
+                                wmk = Sp(rmk, rcMin[ktype][mtype], rcMax[ktype][mtype]);
                             else
                                 wmk = 0.0;
 
@@ -175,10 +175,10 @@ void AIREBOForceField::E_LJ()
                                 rmj_vec[2] = rmk_vec[2] + rkj_vec[2];
                                 rmj_sq = rmj_vec[0] * rmj_vec[0] + rmj_vec[1] * rmj_vec[1] + rmj_vec[2] * rmj_vec[2];
 
-                                if ( rmj_sq < rcmaxsq[mtype][jtype] )
+                                if ( rmj_sq < rcMaxSq[mtype][jtype] )
                                 {
                                     rmj = sqrt(rmj_sq);
-                                    wmj = Sp(rmj, rcmin[mtype][jtype], rcmax[mtype][jtype]);
+                                    wmj = Sp(rmj, rcMin[mtype][jtype], rcMax[mtype][jtype]);
                                     if ( wki * wmk * wmj > best )
                                     {
                                         best = wki * wmk * wmj;
@@ -230,11 +230,11 @@ void AIREBOForceField::E_LJ()
             VA = Str * cij * VLJ;
             if ( Str > 0.0 )
             {
-                scale = rcmin[itype][jtype] / rji;
+                scale = rcMin[itype][jtype] / rji;
                 delscale[0] = scale * rji_vec[0];
                 delscale[1] = scale * rji_vec[1];
                 delscale[2] = scale * rji_vec[2];
-                Stb = bondorderLJ(i, j, delscale, rcmin[itype][jtype], rji);
+                Stb = bondorderLJ(i, j, delscale, rcMin[itype][jtype], rji);
             }
             else
                 Stb = 0.0;
@@ -296,7 +296,7 @@ double AIREBOForceField::bondorderLJ(int i, int j, double rji_vec[3], double rji
     itype = type[atomi];
     jtype = type[atomj];
 
-    wij = Sp(rji0, rcmin[itype][jtype], rcmax[itype][jtype]);
+    wij = Sp(rji0, rcMin[itype][jtype], rcMax[itype][jtype]);
     NijC = nC[atomi] - ( wij * kronecker(jtype, 0) );
     NijH = nH[atomi] - ( wij * kronecker(jtype, 1) );
     NjiC = nC[atomj] - ( wij * kronecker(itype, 0) );
@@ -325,7 +325,7 @@ double AIREBOForceField::bondorderLJ(int i, int j, double rji_vec[3], double rji
 
             lamdajik = 4.0 * kronecker(itype, 1) *
                        ( ( rho[ktype][1] - rki ) - ( rho[jtype][1] - rji ) );
-            wki = Sp(rki, rcmin[itype][ktype], rcmax[itype][ktype]);
+            wki = Sp(rki, rcMin[itype][ktype], rcMax[itype][ktype]);
             Nki = nC[atomk] - ( wki * kronecker(itype, 0) ) +
                   nH[atomk] - ( wki * kronecker(itype, 1) );
             cosjik = ( ( rji_vec[0] * rki_vec[0] ) + ( rji_vec[1] * rki_vec[1] ) + ( rji_vec[2] * rki_vec[2] ) ) / ( rji * rki );
@@ -360,7 +360,7 @@ double AIREBOForceField::bondorderLJ(int i, int j, double rji_vec[3], double rji
 
             lamdaijl = 4.0 * kronecker(jtype, 1) *
                        ( ( rho[ltype][1] - rlj ) - ( rho[itype][1] - rji ) );
-            wlj = Sp(rlj, rcmin[jtype][ltype], rcmax[jtype][ltype]);
+            wlj = Sp(rlj, rcMin[jtype][ltype], rcMax[jtype][ltype]);
             Nlj = nC[atoml] - ( wlj * kronecker(jtype, 0) ) +
                   nH[atoml] - ( wlj * kronecker(jtype, 1) );
             cosijl = -1.0 * ( ( rji_vec[0] * rlj_vec[0] ) + ( rji_vec[1] * rlj_vec[1] ) + ( rji_vec[2] * rlj_vec[2] ) ) / ( rji * rlj );
@@ -415,7 +415,7 @@ double AIREBOForceField::bondorderLJ(int i, int j, double rji_vec[3], double rji
 
                 if ( sqrt(1.0 - cos321 * cos321) > sqrt(TOL) )
                 {
-                    wki = Sp(rki, rcmin[itype][ktype], rcmaxp[itype][ktype]);
+                    wki = Sp(rki, rcMin[itype][ktype], rcMaxP[itype][ktype]);
 
                     REBO_neighbours_num_j = REBO_neighbours_num[j];
                     REBO_neighbours_list_j = REBO_neighbours_list[j];
@@ -446,7 +446,7 @@ double AIREBOForceField::bondorderLJ(int i, int j, double rji_vec[3], double rji
 
                             if ( sqrt(1.0 - cos234 * cos234) > sqrt(TOL) )
                             {
-                                wlj = Sp(rlj, rcmin[jtype][ltype], rcmaxp[jtype][ltype]);
+                                wlj = Sp(rlj, rcMin[jtype][ltype], rcMaxP[jtype][ltype]);
                                 crosskij[0] = ( rji_vec[1] * rki_vec[2] - rji_vec[2] * rki_vec[1] );
                                 crosskij[1] = ( rji_vec[2] * rki_vec[0] - rji_vec[0] * rki_vec[2] );
                                 crosskij[2] = ( rji_vec[0] * rki_vec[1] - rji_vec[1] * rki_vec[0] );
