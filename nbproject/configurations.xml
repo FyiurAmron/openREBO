@@ -5,6 +5,7 @@
                    displayName="Header Files"
                    projectFiles="true">
       <itemPath>airebo_force_field.h</itemPath>
+      <itemPath>nlists.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -41,6 +42,9 @@
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
       <compileType>
+        <ccTool>
+          <commandLine>-std=c++0x</commandLine>
+        </ccTool>
       </compileType>
       <item path="airebo_force_field.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -55,6 +59,8 @@
       <item path="airebo_force_field_torsion.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="nlists.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
     <conf name="Release" type="1">
@@ -90,6 +96,8 @@
       <item path="airebo_force_field_torsion.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="nlists.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
   </confs>

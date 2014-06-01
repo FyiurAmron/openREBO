@@ -17,7 +17,7 @@ using namespace std;
  */
 int main( int argc, char** argv ) {
   printf( "test\n" );
-  AIREBOForceField* aff = new AIREBOForceField( "CH.airebo", 1.0, false, false, 256 );
+  AIREBO::ForceField* aff = new AIREBO::ForceField( "CH.airebo", 0.0, false, false, 256 );
   //aff->compute()
   return 0;
 }
