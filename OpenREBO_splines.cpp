@@ -1,11 +1,15 @@
-// based on LAMMPS implementation of AIREBO force field
+/*
+    File:   OpenREBO_splines.cpp
+    Author: vaxquis
+    based on LAMMPS implementation of AIREBO potential
+ */
 
-#include "airebo_force_field.h"
+#include "OpenREBO.h"
 
-namespace AIREBO {
+namespace OpenREBO {
   const int DIM = 4;
 
-  double ForceField::gSpline( double costh, double Nij, int typei ) {
+  double AIREBO::gSpline( double costh, double Nij, int typei ) {
     double coeffs[6], g1, g2;
     double cut = 0.0, g = 0.0;
 
@@ -71,7 +75,7 @@ namespace AIREBO {
     return g;
   }
 
-  double ForceField::PijSpline( double NijC, double NijH, int typei, int typej ) {
+  double AIREBO::PijSpline( double NijC, double NijH, int typei, int typej ) {
     int x, y, i;
     double Pij, coeffs[16];
 
@@ -128,7 +132,7 @@ namespace AIREBO {
     return Pij;
   }
 
-  double ForceField::piRCSpline( double Nij, double Nji, double Nijconj, int typei, int typej ) {
+  double AIREBO::piRCSpline( double Nij, double Nji, double Nijconj, int typei, int typej ) {
     int x, y, z, i;
     double piRC, coeffs[64] = { };
 
@@ -233,7 +237,7 @@ namespace AIREBO {
     return Sptricubic( Nij, Nji, Nijconj, coeffs );
   }
 
-  double ForceField::TijSpline( double Nij, double Nji, double Nijconj ) {
+  double AIREBO::TijSpline( double Nij, double Nji, double Nijconj ) {
     bool done;
     int x, y, z, i;
     double Tijf, coeffs[64] = { };
@@ -278,7 +282,7 @@ namespace AIREBO {
     return Sptricubic( Nij, Nji, Nijconj, coeffs );
   }
 
-  double ForceField::Sp5th( double x, double *coeffs ) {
+  double AIREBO::Sp5th( double x, double *coeffs ) {
     double f;
     const double x2 = x * x;
     const double x3 = x2 * x;
@@ -293,7 +297,7 @@ namespace AIREBO {
     return f;
   }
 
-  double ForceField::Spbicubic( double x, double y, double *coeffs ) {
+  double AIREBO::Spbicubic( double x, double y, double *coeffs ) {
     double f = 0.0, xn; // yn values can actually be cached
 
     double yn[DIM];
@@ -311,7 +315,7 @@ namespace AIREBO {
     return f;
   }
 
-  double ForceField::Sptricubic( double x, double y, double z, double *coeffs ) {
+  double AIREBO::Sptricubic( double x, double y, double z, double *coeffs ) {
     double f = 0.0, xn; // yn & zn values can actually be cached
 
     double yn[DIM], zn[DIM];

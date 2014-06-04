@@ -4,9 +4,8 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
-      <itemPath>airebo_force_field.h</itemPath>
+      <itemPath>OpenREBO.h</itemPath>
       <itemPath>const.h</itemPath>
-      <itemPath>cutoff.h</itemPath>
       <itemPath>nlist.h</itemPath>
       <itemPath>vector.h</itemPath>
     </logicalFolder>
@@ -17,11 +16,11 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
-      <itemPath>airebo_force_field.cpp</itemPath>
-      <itemPath>airebo_force_field_lj.cpp</itemPath>
-      <itemPath>airebo_force_field_rebo.cpp</itemPath>
-      <itemPath>airebo_force_field_splines.cpp</itemPath>
-      <itemPath>airebo_force_field_torsion.cpp</itemPath>
+      <itemPath>OpenREBO.cpp</itemPath>
+      <itemPath>OpenREBO_E_LJ.cpp</itemPath>
+      <itemPath>OpenREBO_E_REBO.cpp</itemPath>
+      <itemPath>OpenREBO_E_Torsion.cpp</itemPath>
+      <itemPath>OpenREBO_splines.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
       <itemPath>nlist.cpp</itemPath>
     </logicalFolder>
@@ -47,24 +46,22 @@
       </toolsSet>
       <compileType>
         <ccTool>
-          <commandLine>-std=c++0x</commandLine>
+          <standard>8</standard>
         </ccTool>
       </compileType>
-      <item path="airebo_force_field.cpp" ex="false" tool="1" flavor2="0">
+      <item path="OpenREBO.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="airebo_force_field.h" ex="false" tool="3" flavor2="0">
+      <item path="OpenREBO.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="airebo_force_field_lj.cpp" ex="false" tool="1" flavor2="0">
+      <item path="OpenREBO_E_LJ.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="airebo_force_field_rebo.cpp" ex="false" tool="1" flavor2="0">
+      <item path="OpenREBO_E_REBO.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="airebo_force_field_splines.cpp" ex="false" tool="1" flavor2="0">
+      <item path="OpenREBO_E_Torsion.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="airebo_force_field_torsion.cpp" ex="false" tool="1" flavor2="0">
+      <item path="OpenREBO_splines.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="const.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="cutoff.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -95,21 +92,19 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
-      <item path="airebo_force_field.cpp" ex="false" tool="1" flavor2="0">
+      <item path="OpenREBO.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="airebo_force_field.h" ex="false" tool="3" flavor2="0">
+      <item path="OpenREBO.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="airebo_force_field_lj.cpp" ex="false" tool="1" flavor2="0">
+      <item path="OpenREBO_E_LJ.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="airebo_force_field_rebo.cpp" ex="false" tool="1" flavor2="0">
+      <item path="OpenREBO_E_REBO.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="airebo_force_field_splines.cpp" ex="false" tool="1" flavor2="0">
+      <item path="OpenREBO_E_Torsion.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="airebo_force_field_torsion.cpp" ex="false" tool="1" flavor2="0">
+      <item path="OpenREBO_splines.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="const.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="cutoff.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>

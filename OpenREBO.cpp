@@ -1,9 +1,9 @@
 // based on LAMMPS implementation of AIREBO force field
 
-#include "airebo_force_field.h"
+#include "OpenREBO.h"
 
-namespace AIREBO {
-  void ForceField::readParameters( const string& file_name ) {
+namespace OpenREBO {
+  void AIREBO::readParameters( const string& file_name ) {
     ifstream file;
     file.open( file_name.c_str( ) );
     assert( file.is_open( ) );
@@ -160,7 +160,7 @@ namespace AIREBO {
     inv_th_delta = 1.0 / ( thmax - thmin );
   }
 
-  void ForceField::readSplineGC( ifstream& ifs, double Vdom[5], double v1[4][6], double v2[4][6] ) {
+  void AIREBO::readSplineGC( ifstream& ifs, double Vdom[5], double v1[4][6], double v2[4][6] ) {
     for( int i = 0; i < 3; i++ )
       getLine( ifs );
     int nr_domains = getLineToInt( ifs );
@@ -177,7 +177,7 @@ namespace AIREBO {
         v2[i][j] = getLineToDouble( ifs );
   }
 
-  void ForceField::readSplineGH( ifstream& ifs, double Vdom[4], double v[3][6] ) {
+  void AIREBO::readSplineGH( ifstream& ifs, double Vdom[4], double v[3][6] ) {
     for( int i = 0; i < 3; i++ )
       getLine( ifs );
     int nr_domains = getLineToInt( ifs );
@@ -190,7 +190,7 @@ namespace AIREBO {
         v[i][j] = getLineToDouble( ifs );
   }
 
-  void ForceField::readSplineP( ifstream& ifs, double Vdom[2][2], double v[4][4][16] ) {
+  void AIREBO::readSplineP( ifstream& ifs, double Vdom[2][2], double v[4][4][16] ) {
     for( int i = 0; i < 3; i++ )
       getLine( ifs );
     int nr_domains = getLineToInt( ifs );
@@ -205,7 +205,7 @@ namespace AIREBO {
           v[i][j][k] = getLineToDouble( ifs );
   }
 
-  void ForceField::readSplinePI( ifstream& ifs, double Vdom[3][2], double v[4][4][9][64] ) {
+  void AIREBO::readSplinePI( ifstream& ifs, double Vdom[3][2], double v[4][4][9][64] ) {
     for( int i = 0; i < 3; i++ )
       getLine( ifs );
     int nr_domains = getLineToInt( ifs );
@@ -220,7 +220,7 @@ namespace AIREBO {
             v[i][j][k][l] = getLineToDouble( ifs );
   }
 
-  void ForceField::initializeSplines( ) {
+  void AIREBO::initializeSplines( ) {
     int i, j, k;
 
     for( i = 0; i < 5; i++ )

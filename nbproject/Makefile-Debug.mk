@@ -35,11 +35,11 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
-	${OBJECTDIR}/airebo_force_field.o \
-	${OBJECTDIR}/airebo_force_field_lj.o \
-	${OBJECTDIR}/airebo_force_field_rebo.o \
-	${OBJECTDIR}/airebo_force_field_splines.o \
-	${OBJECTDIR}/airebo_force_field_torsion.o \
+	${OBJECTDIR}/OpenREBO.o \
+	${OBJECTDIR}/OpenREBO_E_LJ.o \
+	${OBJECTDIR}/OpenREBO_E_REBO.o \
+	${OBJECTDIR}/OpenREBO_E_Torsion.o \
+	${OBJECTDIR}/OpenREBO_splines.o \
 	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/nlist.o
 
@@ -48,8 +48,8 @@ OBJECTFILES= \
 CFLAGS=
 
 # CC Compiler Flags
-CCFLAGS=-std=c++0x
-CXXFLAGS=-std=c++0x
+CCFLAGS=
+CXXFLAGS=
 
 # Fortran Compiler Flags
 FFLAGS=
@@ -68,40 +68,40 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/airebo.exe: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/airebo ${OBJECTFILES} ${LDLIBSOPTIONS}
 
-${OBJECTDIR}/airebo_force_field.o: airebo_force_field.cpp 
+${OBJECTDIR}/OpenREBO.o: OpenREBO.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/airebo_force_field.o airebo_force_field.cpp
+	$(COMPILE.cc) -g -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO.o OpenREBO.cpp
 
-${OBJECTDIR}/airebo_force_field_lj.o: airebo_force_field_lj.cpp 
+${OBJECTDIR}/OpenREBO_E_LJ.o: OpenREBO_E_LJ.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/airebo_force_field_lj.o airebo_force_field_lj.cpp
+	$(COMPILE.cc) -g -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO_E_LJ.o OpenREBO_E_LJ.cpp
 
-${OBJECTDIR}/airebo_force_field_rebo.o: airebo_force_field_rebo.cpp 
+${OBJECTDIR}/OpenREBO_E_REBO.o: OpenREBO_E_REBO.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/airebo_force_field_rebo.o airebo_force_field_rebo.cpp
+	$(COMPILE.cc) -g -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO_E_REBO.o OpenREBO_E_REBO.cpp
 
-${OBJECTDIR}/airebo_force_field_splines.o: airebo_force_field_splines.cpp 
+${OBJECTDIR}/OpenREBO_E_Torsion.o: OpenREBO_E_Torsion.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/airebo_force_field_splines.o airebo_force_field_splines.cpp
+	$(COMPILE.cc) -g -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO_E_Torsion.o OpenREBO_E_Torsion.cpp
 
-${OBJECTDIR}/airebo_force_field_torsion.o: airebo_force_field_torsion.cpp 
+${OBJECTDIR}/OpenREBO_splines.o: OpenREBO_splines.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/airebo_force_field_torsion.o airebo_force_field_torsion.cpp
+	$(COMPILE.cc) -g -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO_splines.o OpenREBO_splines.cpp
 
 ${OBJECTDIR}/main.o: main.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
+	$(COMPILE.cc) -g -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
 
 ${OBJECTDIR}/nlist.o: nlist.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/nlist.o nlist.cpp
+	$(COMPILE.cc) -g -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/nlist.o nlist.cpp
 
 # Subprojects
 .build-subprojects:

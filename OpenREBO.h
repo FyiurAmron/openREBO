@@ -1,4 +1,8 @@
-// based on LAMMPS implementation of AIREBO force field
+/*
+    File:   OpenREBO.h
+    Author: vaxquis
+    based on LAMMPS implementation of AIREBO potential
+ */
 #pragma once
 
 #ifndef AIREBO_FORCE_FIELD_H
@@ -17,7 +21,7 @@
 
 #include "nlist.h"
 
-namespace AIREBO {
+namespace OpenREBO {
   using std::ifstream;
   using std::getline;
   using std::string;
@@ -25,18 +29,18 @@ namespace AIREBO {
   using std::istringstream;
   using std::cout;
 
-  class ForceField {
+  class AIREBO {
     friend class NList; // for the sake of SpXX
 
   public:
 
-    ForceField( const string& filename, double cutR_LJ_sigma,
+    AIREBO( const string& filename, double cutR_LJ_sigma,
                 bool LJ_flag, bool torsion_flag, int max_REBO_neighbours ) {
       atom_list = nullptr;
 
       total_energy = 0.0;
-      energy_rebo = 0.0;
-      energy_lj = 0.0;
+      energy_REBO = 0.0;
+      energy_LJ = 0.0;
       energy_torsion = 0.0;
 
       readParameters( filename );
@@ -53,7 +57,7 @@ namespace AIREBO {
       initializeSplines( );
     }
 
-    virtual ~ForceField( ) {
+    virtual ~AIREBO( ) {
       if ( atom_list != nullptr )
         delete atom_list;
       if ( rebo_atom_list != nullptr )
@@ -63,21 +67,20 @@ namespace AIREBO {
     double compute( ) {
       assert( atom_list != nullptr );
 
-      total_energy = 0.0;
-      energy_rebo = 0.0;
-      energy_lj = 0.0;
-      energy_torsion = 0.0;
       REBO_neighbours( );
 
-      E_REBO( );
+      energy_REBO = E_REBO( );
 #ifndef LEAN_REBO
+      energy_LJ = 0.0;
+      energy_torsion = 0.0;
+
       if ( LJ_flag )
-        E_LJ( );
+        energy_LJ = E_LJ( );
       if ( torsion_flag )
-        E_Torsion( );
+        energy_torsion = E_Torsion( );
 #endif
 
-      total_energy = energy_rebo + energy_lj + energy_torsion;
+      total_energy = energy_REBO + energy_LJ + energy_torsion;
 
       return total_energy;
     }
@@ -105,11 +108,11 @@ namespace AIREBO {
     }
 
     double getEnergyREBO( ) {
-      return energy_rebo;
+      return energy_REBO;
     }
 
     double getEnergyLJ( ) {
-      return energy_lj;
+      return energy_LJ;
     }
 
     double getEnergyTorsion( ) {
@@ -120,7 +123,7 @@ namespace AIREBO {
     bool LJ_flag, torsion_flag;
     int max_REBO_neighbours;
 
-    double total_energy, energy_rebo, energy_lj, energy_torsion;
+    double total_energy, energy_REBO, energy_LJ, energy_torsion;
 
     NList* atom_list;
     RNList* rebo_atom_list;
@@ -197,12 +200,14 @@ namespace AIREBO {
     double Sptricubic( double x, double y, double z, double *coeffs );
 
     void REBO_neighbours( );
-    void E_REBO( );
-    double bond_order( int i, int j, double *rji_vec, double rji );
+    double E_REBO( );
+    double bond_order( int i, int j, const bond* b );
+    double bond_order_1( int a1, int a2, int type1, int type2, const double r12_vec[3], double r12, double inv_r12,
+          double NC, double NH, double NTotal, double &p, const neighbor_tracker *nt );
 
 #ifndef LEAN_REBO
-    void E_LJ( );
-    void E_Torsion( );
+    double E_LJ( );
+    double E_Torsion( );
     double bond_orderLJ( int i, int j, double *rji_vec, double rji, double rji0 );
 #endif
 

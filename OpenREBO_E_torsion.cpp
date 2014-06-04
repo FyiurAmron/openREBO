@@ -1,12 +1,18 @@
-// based on LAMMPS implementation of AIREBO force field
+/*
+    File:   OpenREBO_E_Torsion.cpp
+    Author: vaxquis
+    based on LAMMPS implementation of AIREBO potential
+ */
 
-#include "airebo_force_field.h"
+#include "OpenREBO.h"
 
 #ifndef LEAN_REBO
 
-namespace AIREBO {
+namespace OpenREBO {
 
-  void ForceField::E_Torsion( ) {
+  double ForceField::E_Torsion( ) {
+    double eTorsion = 0.0;
+
     int itype;
     int j, jtype;
     int k, ktype;
@@ -85,7 +91,7 @@ namespace AIREBO {
           rki = REBO_neighbours_bonds_i[kk].r;
           rki_sq = REBO_neighbours_bonds_i[kk].r_sq;
 
-          cos321 = cos_theta_clamp( rki_vec, rij_vec, rki, rij );
+          cos321 = -cos_theta_clamp( rki_vec, rij_vec, rki, rij );
           sin321 = sqrt( 1.0 - cos321 * cos321 );
 
           if ( sin321 < TOL )
@@ -141,11 +147,12 @@ namespace AIREBO {
             cw2 *= cw;
             Vtors = epsilonT[ktype][ltype] * ( 256.0 / 405.0 * cw2 - 0.1 );
 
-            energy_torsion += Vtors * wki * wji * wlj * ( 1.0 - tspjik ) * ( 1.0 - tspijl );
+            eTorsion += Vtors * wki * wji * wlj * ( 1.0 - tspjik ) * ( 1.0 - tspijl );
           }
         }
       }
     }
+    return eTorsion;
   }
 
 }

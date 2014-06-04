@@ -17,33 +17,29 @@ using std::ifstream;
 #include "const.h"
 #include "vector.h"
 
-namespace AIREBO {
+namespace OpenREBO {
   using std::istream;
 
-  class ForceField;
+  class AIREBO;
 
-  /*
-  typedef struct {
-    double x, y, z;
-    double r, r_sq;
-  } vec3d;
-   */
   class bond {
   public:
     int target_nr;
     double v[3]; // x, y, z;
-    double r, r_sq, sp_rc[TYPE_COUNT];
+    double r, r_sq, inv_r, sp_rc[TYPE_COUNT], sp_rcP[TYPE_COUNT];
   };
 
   class neighbor_tracker {
   public:
-    int neighbor_count;//, *neighbor_list;
+    int neighbor_count;
     bond** neighbor_bonds;
 
+    neighbor_tracker( int max_neighbor_count ) {
+      neighbor_bonds = new bond*[max_neighbor_count];
+      this->neighbor_count = 0;
+    }
+
     virtual ~neighbor_tracker( ) {
-      //delete [] neighbor_list;
-      for( int i = 0; i < neighbor_count; i++ )
-        delete neighbor_bonds[i];
       delete [] neighbor_bonds;
     }
 
@@ -51,13 +47,20 @@ namespace AIREBO {
 
   class atom : public neighbor_tracker {
   public:
-    int type; // note: 0 for C, 1 for H *by contract*; -1 (LAMMPS NULL) disallowed
+    int type;
     double nC, nH, nTotal;
 
-    atom( ) {
+    atom( int atom_type, int neighbor_count ) : neighbor_tracker( neighbor_count ) {
+      assert( atom_type == 0 || atom_type == 1 ); // note: 0 for C, 1 for H *by contract*; -1 (LAMMPS NULL) disallowed
+      type = atom_type;
       nC = 0.0;
       nH = 0.0;
       nTotal = 0.0;
+    }
+
+    virtual ~atom( ) {
+      for( int i = 0; i < neighbor_count; i++ )
+        delete neighbor_bonds[i];
     }
 
     atom& operator =(const atom& right ) = delete;
@@ -67,9 +70,9 @@ namespace AIREBO {
   public:
     atom** atoms;
     int atom_count;
-    const ForceField* my_ff;
+    const AIREBO* my_ff;
 
-    NList( const string& filename, const ForceField* my_ff ) {
+    NList( const string& filename, const AIREBO* my_ff ) {
       this->my_ff = my_ff;
       ifstream ifs( filename );
       atoms = read_list_from( ifs );
@@ -83,6 +86,7 @@ namespace AIREBO {
     virtual ~NList( ) {
       for( int i = 0; i < atom_count; i++ )
         delete atoms[i];
+      delete [] atoms;
     }
 
   private:
@@ -97,19 +101,14 @@ namespace AIREBO {
     RNList( int atom_count, int max_neighbors ) {
       this->atom_count = atom_count;
       neighbors = new neighbor_tracker*[atom_count];
-      neighbor_tracker *nt;
-      for( int i = 0; i < atom_count; i++ ) {
-        nt = new neighbor_tracker( );
-        nt->neighbor_count = 0;
-        //nt->neighbor_list = new int[max_neighbors];
-        nt->neighbor_bonds = new bond*[max_neighbors];
-        neighbors[i] = nt;
-      }
+      for( int i = 0; i < atom_count; i++ )
+        neighbors[i] = new neighbor_tracker( max_neighbors );
     }
 
     virtual ~RNList( ) {
       for( int i = 0; i < atom_count; i++ )
-        delete neighbors[i];
+        delete neighbors[i]; // don't do it since it only stores *existing* bonds created for 'atom' by NList loader
+      delete [] neighbors;
     }
   };
 

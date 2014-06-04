@@ -1,12 +1,17 @@
-// based on LAMMPS implementation of AIREBO force field
+/*
+    File:   OpenREBO_E_LJ.cpp
+    Author: vaxquis
+    based on LAMMPS implementation of AIREBO potential
+ */
 
-#include "airebo_force_field.h"
+#include "OpenREBO.h"
 
 #ifndef LEAN_REBO
 
-namespace AIREBO {
+namespace OpenREBO {
 
-  void ForceField::E_LJ( ) {
+  double ForceField::E_LJ( ) {
+    double eLJ = 0.0;
     double rljmin, rljmax;
     double sigcut, sigmin, sigwid;
     int i, j, k, m;
@@ -198,9 +203,10 @@ namespace AIREBO {
         } else
           Stb = 0.0;
 
-        energy_lj += VA * Stb + ( 1.0 - Str ) * cij * VLJ;
+        eLJ += VA * Stb + ( 1.0 - Str ) * cij * VLJ;
       }
     }
+    return eLJ;
   }
 
   double ForceField::bond_orderLJ( int i, int j, double rji_vec[3], double rji, double rji0 ) {
@@ -299,7 +305,7 @@ namespace AIREBO {
 
     PijS = 0.0;
     PijS = PijSpline( NijC, NijH, itype, jtype );
-    pij = pow( 1.0 + Etmp + PijS, -0.5 );
+    pij = 1.0 / sqrt( 1.0 + Etmp + PijS );
 
     Etmp = 0.0;
 
@@ -317,7 +323,7 @@ namespace AIREBO {
       rlj = REBO_neighbours_bonds_j[l].r;
 
       wlj = SpRC( rlj, jtype, ltype );
-      cosijl = cos_theta_clamp( rji_vec, rlj_vec, rji, rlj );
+      cosijl = -cos_theta_clamp( rji_vec, rlj_vec, rji, rlj );
 
       g = gSpline( cosijl, NjiC + NjiH, jtype );
       if ( jtype == 1 )
@@ -328,7 +334,7 @@ namespace AIREBO {
 
     PjiS = 0.0;
     PjiS = PijSpline( NjiC, NjiH, jtype, itype );
-    pji = pow( 1.0 + Etmp + PjiS, -0.5 );
+    pji = 1.0 / sqrt( 1.0 + Etmp + PjiS );
 
     Nijconj = 1.0 + NconjtmpI * NconjtmpI + NconjtmpJ * NconjtmpJ;
     piRC = piRCSpline( NijC + NijH, NjiC + NjiH, Nijconj, itype, jtype );
@@ -380,7 +386,7 @@ namespace AIREBO {
         rlj = REBO_neighbours_bonds_j[l].r;
         rlj_sq = REBO_neighbours_bonds_j[l].r_sq;
 
-        cos234 = cos_theta_clamp( rji_vec, rlj_vec, rji, rlj );
+        cos234 = -cos_theta_clamp( rji_vec, rlj_vec, rji, rlj );
 
         sum( rli_vec, rji_vec, rlj_vec );
 
@@ -394,7 +400,7 @@ namespace AIREBO {
         wlj = SpRC( rlj, jtype, ltype );
         cross( crosskij, rji_vec, rki_vec );
         cross( crossijl, rji_vec, rlj_vec );
-        cos_theta_clamp( crosskij, crossijl, length( crosskij ), length( crossijl ) );
+        omkijl = -cos_theta_clamp( crosskij, crossijl, length( crosskij ), length( crossijl ) );
         Etmp += ( 1.0 - omkijl * omkijl ) * wki * wlj * ( 1.0 - tspjik ) * ( 1.0 - tspijl );
       }
     }
