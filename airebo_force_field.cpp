@@ -1,194 +1,43 @@
 // based on LAMMPS implementation of AIREBO force field
 
-#include <cassert>
-
 #include "airebo_force_field.h"
 
 namespace AIREBO {
-
-  ForceField::ForceField( string file_name, double cutlj,
-          bool ljflag, bool torflag, int max_number_of_REBO_neighbours ) {
-    natoms = 0;
-    type = NULL;
-    nC = NULL;
-    nH = NULL;
-    cutljsq = NULL;
-    lj1 = NULL;
-    lj2 = NULL;
-    lj3 = NULL;
-    lj4 = NULL;
-
-    total_energy = 0.0;
-    energy_rebo = 0.0;
-    energy_lj = 0.0;
-    energy_torsion = 0.0;
-
-    readParameters( file_name );
-    this->cutlj = cutlj;
-    this->ljflag = ljflag;
-    if ( ljflag )
-      assert( cutlj > 0.0 );
-    this->torflag = torflag;
-
-    assert( max_number_of_REBO_neighbours >= 1 );
-    this->max_number_of_REBO_neighbours = max_number_of_REBO_neighbours;
-
-    allocateMemory( );
-    initialize_constants( );
-    initialize_splines( );
-  }
-
-  ForceField::~ForceField( ) {
-    deallocateMemory( );
-  }
-
-  double ForceField::getCutoffRadius( ) {
-    return cutmax;
-  }
-
-  double ForceField::compute( nLists &nl ) {
-#ifdef AIREBO_DEBUG
-    cout << "ForceField::compute() started!" << endl;
-    //    cout << nl.to_string( ) << endl;
-#endif
-
-    assert( nl.number_of_atoms > 0 );
-    natoms = nl.number_of_atoms;
-
-    if ( natoms == 0 )
-      allocateREBO( nl.number_of_atoms );
-    else if ( natoms != nl.number_of_atoms ) {
-      deallocateREBO( );
-      allocateREBO( nl.number_of_atoms );
-    }
-
-    assert( nl.type != NULL );
-    type = nl.type;
-
-    assert( nl.neighbours_num != NULL );
-    neighbours_num = nl.neighbours_num;
-
-    assert( nl.neighbours_list != NULL );
-    neighbours_list = nl.neighbours_list;
-
-    assert( nl.neighbours_bonds != NULL );
-    neighbours_bonds = nl.neighbours_bonds;
-
-    total_energy = 0.0;
-    energy_rebo = 0.0;
-    energy_lj = 0.0;
-    energy_torsion = 0.0;
-
-#ifdef AIREBO_DEBUG
-    cout << "starting REBO_neighbours()!" << endl;
-#endif
-
-    REBO_neighbours( );
-
-#ifdef AIREBO_DEBUG
-    cout << "REBO_neighbours() finished!" << endl;
-#endif
-
-#ifdef AIREBO_DEBUG
-    cout << "starting E_REBO()!" << endl;
-#endif
-
-    E_REBO( );
-
-#ifdef AIREBO_DEBUG
-    cout << "E_REBO() finished!" << endl;
-    cout << "energy_rebo = " << energy_rebo << endl;
-    cout << endl;
-#endif
-
-    if ( ljflag ) {
-#ifdef AIREBO_DEBUG
-      cout << "starting E_LJ()!" << endl;
-#endif
-
-      E_LJ( );
-
-#ifdef AIREBO_DEBUG
-      cout << "E_LJ() finished!" << endl;
-      cout << "energy_lj = " << energy_lj << endl;
-      cout << endl;
-#endif
-    }
-
-    if ( torflag ) {
-#ifdef AIREBO_DEBUG
-      cout << "starting E_TORSION()!" << endl;
-#endif
-
-      E_TORSION( );
-
-#ifdef AIREBO_DEBUG
-      cout << "E_TORSION() finished!" << endl;
-      cout << "energy_torsion = " << energy_torsion << endl;
-      cout << endl;
-#endif
-    }
-
-    total_energy = energy_rebo + energy_lj + energy_torsion;
-
-    return total_energy;
-  }
-
-  double ForceField::getTotalEnergy( ) {
-    return total_energy;
-  }
-
-  double ForceField::getREBOEnergy( ) {
-    return energy_rebo;
-  }
-
-  double ForceField::getLJEnergy( ) {
-    return energy_lj;
-  }
-
-  double ForceField::getTORSIONEnergy( ) {
-    return energy_torsion;
-  }
-
-  void ForceField::readParameters( string file_name ) {
+  void ForceField::readParameters( const string& file_name ) {
     ifstream file;
-    string line;
-    int i, j, k, l;
-    int number_of_domains;
-
     file.open( file_name.c_str( ) );
     assert( file.is_open( ) );
 
+    string line;
     do { // skip comments at beginning of file
       getline( file, line );
     } while( line.length( ) != 0 && line.at( 0 ) == '#' );
 
-    // a) czlon REBO
-    rcMin[0][0] = getLineAndConvertToDouble( file );
-    rcMin[0][1] = getLineAndConvertToDouble( file );
+    rcMin[0][0] = getLineToDouble( file );
+    rcMin[0][1] = getLineToDouble( file );
     rcMin[1][0] = rcMin[0][1];
-    rcMin[1][1] = getLineAndConvertToDouble( file );
+    rcMin[1][1] = getLineToDouble( file );
 
-    rcMax[0][0] = getLineAndConvertToDouble( file );
-    rcMax[0][1] = getLineAndConvertToDouble( file );
+    rcMax[0][0] = getLineToDouble( file );
+    rcMax[0][1] = getLineToDouble( file );
     rcMax[1][0] = rcMax[0][1];
-    rcMax[1][1] = getLineAndConvertToDouble( file );
+    rcMax[1][1] = getLineToDouble( file );
 
-    rcMaxP[0][0] = getLineAndConvertToDouble( file );
-    rcMaxP[0][1] = getLineAndConvertToDouble( file );
+    rcMaxP[0][0] = getLineToDouble( file );
+    rcMaxP[0][1] = getLineToDouble( file );
     rcMaxP[1][0] = rcMaxP[0][1];
-    rcMaxP[1][1] = getLineAndConvertToDouble( file );
+    rcMaxP[1][1] = getLineToDouble( file );
 
     rcMaxSq[0][0] = rcMax[0][0] * rcMax[0][0];
     rcMaxSq[0][1] = rcMax[0][1] * rcMax[0][1];
     rcMaxSq[1][0] = rcMaxSq[0][1];
     rcMaxSq[1][1] = rcMax[1][1] * rcMax[1][1];
 
-    smin = getLineAndConvertToDouble( file );
-    Nmin = getLineAndConvertToDouble( file );
-    Nmax = getLineAndConvertToDouble( file );
-    NCmin = getLineAndConvertToDouble( file );
-    NCmax = getLineAndConvertToDouble( file );
+    smin = getLineToDouble( file );
+    Nmin = getLineToDouble( file );
+    Nmax = getLineToDouble( file );
+    NCmin = getLineToDouble( file );
+    NCmax = getLineToDouble( file );
 
     // MOD delt
     pi_div_delta_RC[0][0] = PI / ( rcMax[0][0] - rcMin[0][0] );
@@ -204,70 +53,70 @@ namespace AIREBO {
     pi_div_delta_N = PI / ( Nmax - Nmin );
     pi_div_delta_NC = PI / ( NCmax - NCmin );
 
-    Q[0][0] = getLineAndConvertToDouble( file );
-    Q[0][1] = getLineAndConvertToDouble( file );
+    Q[0][0] = getLineToDouble( file );
+    Q[0][1] = getLineToDouble( file );
     Q[1][0] = Q[0][1];
-    Q[1][1] = getLineAndConvertToDouble( file );
-    alpha[0][0] = getLineAndConvertToDouble( file );
-    alpha[0][1] = getLineAndConvertToDouble( file );
+    Q[1][1] = getLineToDouble( file );
+    alpha[0][0] = getLineToDouble( file );
+    alpha[0][1] = getLineToDouble( file );
     alpha[1][0] = alpha[0][1];
-    alpha[1][1] = getLineAndConvertToDouble( file );
-    A[0][0] = getLineAndConvertToDouble( file );
-    A[0][1] = getLineAndConvertToDouble( file );
+    alpha[1][1] = getLineToDouble( file );
+    A[0][0] = getLineToDouble( file );
+    A[0][1] = getLineToDouble( file );
     A[1][0] = A[0][1];
-    A[1][1] = getLineAndConvertToDouble( file );
+    A[1][1] = getLineToDouble( file );
 
-    BIJc[0][0][0] = getLineAndConvertToDouble( file );
-    BIJc[0][0][1] = getLineAndConvertToDouble( file );
-    BIJc[0][0][2] = getLineAndConvertToDouble( file );
-    BIJc[0][1][0] = getLineAndConvertToDouble( file );
-    BIJc[0][1][1] = getLineAndConvertToDouble( file );
-    BIJc[0][1][2] = getLineAndConvertToDouble( file );
+    BIJc[0][0][0] = getLineToDouble( file );
+    BIJc[0][0][1] = getLineToDouble( file );
+    BIJc[0][0][2] = getLineToDouble( file );
+    BIJc[0][1][0] = getLineToDouble( file );
+    BIJc[0][1][1] = getLineToDouble( file );
+    BIJc[0][1][2] = getLineToDouble( file );
     BIJc[1][0][0] = BIJc[0][1][0];
     BIJc[1][0][1] = BIJc[0][1][1];
     BIJc[1][0][2] = BIJc[0][1][2];
-    BIJc[1][1][0] = getLineAndConvertToDouble( file );
-    BIJc[1][1][1] = getLineAndConvertToDouble( file );
-    BIJc[1][1][2] = getLineAndConvertToDouble( file );
+    BIJc[1][1][0] = getLineToDouble( file );
+    BIJc[1][1][1] = getLineToDouble( file );
+    BIJc[1][1][2] = getLineToDouble( file );
 
-    Beta[0][0][0] = getLineAndConvertToDouble( file );
-    Beta[0][0][1] = getLineAndConvertToDouble( file );
-    Beta[0][0][2] = getLineAndConvertToDouble( file );
-    Beta[0][1][0] = getLineAndConvertToDouble( file );
-    Beta[0][1][1] = getLineAndConvertToDouble( file );
-    Beta[0][1][2] = getLineAndConvertToDouble( file );
-    Beta[1][0][0] = Beta[0][1][0];
-    Beta[1][0][1] = Beta[0][1][1];
-    Beta[1][0][2] = Beta[0][1][2];
-    Beta[1][1][0] = getLineAndConvertToDouble( file );
-    Beta[1][1][1] = getLineAndConvertToDouble( file );
-    Beta[1][1][2] = getLineAndConvertToDouble( file );
+    beta[0][0][0] = getLineToDouble( file );
+    beta[0][0][1] = getLineToDouble( file );
+    beta[0][0][2] = getLineToDouble( file );
+    beta[0][1][0] = getLineToDouble( file );
+    beta[0][1][1] = getLineToDouble( file );
+    beta[0][1][2] = getLineToDouble( file );
+    beta[1][0][0] = beta[0][1][0];
+    beta[1][0][1] = beta[0][1][1];
+    beta[1][0][2] = beta[0][1][2];
+    beta[1][1][0] = getLineToDouble( file );
+    beta[1][1][1] = getLineToDouble( file );
+    beta[1][1][2] = getLineToDouble( file );
 
-    rho[0][0] = getLineAndConvertToDouble( file );
-    rho[0][1] = getLineAndConvertToDouble( file );
+    rho[0][0] = getLineToDouble( file );
+    rho[0][1] = getLineToDouble( file );
     rho[1][0] = rho[0][1];
-    rho[1][1] = getLineAndConvertToDouble( file );
+    rho[1][1] = getLineToDouble( file );
 
     // b) czlon LJ
-    rcLJmin[0][0] = getLineAndConvertToDouble( file );
-    rcLJmin[0][1] = getLineAndConvertToDouble( file );
+    rcLJmin[0][0] = getLineToDouble( file );
+    rcLJmin[0][1] = getLineToDouble( file );
     rcLJmin[1][0] = rcLJmin[0][1];
-    rcLJmin[1][1] = getLineAndConvertToDouble( file );
+    rcLJmin[1][1] = getLineToDouble( file );
 
-    rcLJmax[0][0] = getLineAndConvertToDouble( file );
-    rcLJmax[0][1] = getLineAndConvertToDouble( file );
+    rcLJmax[0][0] = getLineToDouble( file );
+    rcLJmax[0][1] = getLineToDouble( file );
     rcLJmax[1][0] = rcLJmax[0][1];
-    rcLJmax[1][1] = getLineAndConvertToDouble( file );
+    rcLJmax[1][1] = getLineToDouble( file );
 
-    bLJmin[0][0] = getLineAndConvertToDouble( file );
-    bLJmin[0][1] = getLineAndConvertToDouble( file );
+    bLJmin[0][0] = getLineToDouble( file );
+    bLJmin[0][1] = getLineToDouble( file );
     bLJmin[1][0] = bLJmin[0][1];
-    bLJmin[1][1] = getLineAndConvertToDouble( file );
+    bLJmin[1][1] = getLineToDouble( file );
 
-    bLJmax[0][0] = getLineAndConvertToDouble( file );
-    bLJmax[0][1] = getLineAndConvertToDouble( file );
+    bLJmax[0][0] = getLineToDouble( file );
+    bLJmax[0][1] = getLineToDouble( file );
     bLJmin[1][0] = bLJmin[0][1];
-    bLJmax[1][1] = getLineAndConvertToDouble( file );
+    bLJmax[1][1] = getLineToDouble( file );
 
     inv_delta_bLJ[0][0] = PI / ( bLJmax[0][0] - bLJmin[0][0] );
     inv_delta_bLJ[0][1] = PI / ( bLJmax[0][1] - bLJmin[0][1] );
@@ -279,160 +128,30 @@ namespace AIREBO {
     rcLJmaxsq[1][0] = rcLJmaxsq[0][1];
     rcLJmaxsq[1][1] = rcLJmax[1][1] * rcLJmax[1][1];
 
-    epsilon[0][0] = getLineAndConvertToDouble( file );
-    epsilon[0][1] = getLineAndConvertToDouble( file );
+    epsilon[0][0] = getLineToDouble( file );
+    epsilon[0][1] = getLineToDouble( file );
     epsilon[1][0] = epsilon[0][1];
-    epsilon[1][1] = getLineAndConvertToDouble( file );
+    epsilon[1][1] = getLineToDouble( file );
 
-    sigma[0][0] = getLineAndConvertToDouble( file );
-    sigma[0][1] = getLineAndConvertToDouble( file );
+    sigma[0][0] = getLineToDouble( file );
+    sigma[0][1] = getLineToDouble( file );
     sigma[1][0] = sigma[0][1];
-    sigma[1][1] = getLineAndConvertToDouble( file );
+    sigma[1][1] = getLineToDouble( file );
 
-    // c) czlon REBO
-    epsilonT[0][0] = getLineAndConvertToDouble( file ); // CCCC
-    epsilonT[0][1] = getLineAndConvertToDouble( file ); // CCCH
+    epsilonT[0][0] = getLineToDouble( file ); // CCCC
+    epsilonT[0][1] = getLineToDouble( file ); // CCCH
     epsilonT[1][0] = epsilonT[0][1]; // CCCH
-    epsilonT[1][1] = getLineAndConvertToDouble( file ); // HCCH
+    epsilonT[1][1] = getLineToDouble( file ); // HCCH
 
-    // d) splajny
-    // splajny gC1 i gC2
-    getLine( file );
-    getLine( file );
-    getLine( file );
-    // liczba wezlow
-    number_of_domains = getLineAndConvertToInt( file );
-    // gCdom
-    for( i = 0; i < number_of_domains; i++ )
-      gCdom[i] = getLineAndConvertToDouble( file );
-    getLine( file );
-    // gC1
-    for( i = 0; i < number_of_domains - 1; i++ )
-      for( j = 0; j < 6; j++ )
-        gC1[i][j] = getLineAndConvertToDouble( file );
-    getLine( file );
-    // gC2
-    for( i = 0; i < number_of_domains - 1; i++ )
-      for( j = 0; j < 6; j++ )
-        gC2[i][j] = getLineAndConvertToDouble( file );
+    readSplineGC( file, gCdom, gC1, gC2 );
+    readSplineGH( file, gHdom, gH );
+    readSplineP( file, pCCdom, pCC );
+    readSplineP( file, pCHdom, pCH );
 
-    // splajn gH
-    getLine( file );
-    getLine( file );
-    getLine( file );
-    // liczba wezlow
-    number_of_domains = getLineAndConvertToInt( file );
-    // gHdom
-    for( i = 0; i < number_of_domains; i++ )
-      gHdom[i] = getLineAndConvertToDouble( file );
-    getLine( file );
-    // gH
-    for( i = 0; i < number_of_domains - 1; i++ )
-      for( j = 0; j < 6; j++ )
-        gH[i][j] = getLineAndConvertToDouble( file );
-
-    // splajn pCC
-    getLine( file );
-    getLine( file );
-    getLine( file );
-    // liczba wezlow
-    number_of_domains = getLineAndConvertToInt( file );
-    // pCCdom
-    for( i = 0; i < number_of_domains / 2; i++ )
-      for( j = 0; j < number_of_domains / 2; j++ )
-        pCCdom[i][j] = getLineAndConvertToDouble( file );
-    getLine( file );
-    // pCC
-    for( i = 0; i < (int) pCCdom[0][1]; i++ )
-      for( j = 0; j < (int) pCCdom[1][1]; j++ )
-        for( k = 0; k < 16; k++ )
-          pCC[i][j][k] = getLineAndConvertToDouble( file );
-
-    // splajn pCH
-    getLine( file );
-    getLine( file );
-    getLine( file );
-    // liczba wezlow
-    number_of_domains = getLineAndConvertToInt( file );
-    // pCHdom
-    for( i = 0; i < number_of_domains / 2; i++ )
-      for( j = 0; j < number_of_domains / 2; j++ )
-        pCHdom[i][j] = getLineAndConvertToDouble( file );
-    getLine( file );
-    // pCH
-    for( i = 0; i < (int) pCHdom[0][1]; i++ )
-      for( j = 0; j < (int) pCHdom[1][1]; j++ )
-        for( k = 0; k < 16; k++ )
-          pCH[i][j][k] = getLineAndConvertToDouble( file );
-
-    // splajn piCC
-    getLine( file );
-    getLine( file );
-    getLine( file );
-    // liczba wezlow
-    number_of_domains = getLineAndConvertToInt( file );
-    // piCCdom
-    for( i = 0; i < number_of_domains / 2; i++ )
-      for( j = 0; j < number_of_domains / 3; j++ )
-        piCCdom[i][j] = getLineAndConvertToDouble( file );
-    getLine( file );
-    // piCC
-    for( i = 0; i < (int) piCCdom[0][1]; i++ )
-      for( j = 0; j < (int) piCCdom[1][1]; j++ )
-        for( k = 0; k < (int) piCCdom[2][1]; k++ )
-          for( l = 0; l < 64; l++ )
-            piCC[i][j][k][l] = getLineAndConvertToDouble( file );
-
-    // splajn piCH
-    getLine( file );
-    getLine( file );
-    getLine( file );
-    number_of_domains = getLineAndConvertToInt( file );
-    // piCHdom
-    for( i = 0; i < number_of_domains / 2; i++ )
-      for( j = 0; j < number_of_domains / 3; j++ )
-        piCHdom[i][j] = getLineAndConvertToDouble( file );
-    getLine( file );
-    // piCH
-    for( i = 0; i < (int) piCHdom[0][1]; i++ )
-      for( j = 0; j < (int) piCHdom[1][1]; j++ )
-        for( k = 0; k < (int) piCHdom[2][1]; k++ )
-          for( l = 0; l < 64; l++ )
-            piCH[i][j][k][l] = getLineAndConvertToDouble( file );
-
-    // splajn piHH
-    getLine( file );
-    getLine( file );
-    getLine( file );
-    number_of_domains = getLineAndConvertToInt( file );
-    // piHHdom
-    for( i = 0; i < number_of_domains / 2; i++ )
-      for( j = 0; j < number_of_domains / 3; j++ )
-        piHHdom[i][j] = getLineAndConvertToDouble( file );
-    getLine( file );
-    // piHH
-    for( i = 0; i < (int) piHHdom[0][1]; i++ )
-      for( j = 0; j < (int) piHHdom[1][1]; j++ )
-        for( k = 0; k < (int) piHHdom[2][1]; k++ )
-          for( l = 0; l < 64; l++ )
-            piHH[i][j][k][l] = getLineAndConvertToDouble( file );
-
-    // splajn Tij
-    getLine( file );
-    getLine( file );
-    getLine( file );
-    number_of_domains = getLineAndConvertToInt( file );
-    // Tijdom
-    for( i = 0; i < number_of_domains / 2; i++ )
-      for( j = 0; j < number_of_domains / 3; j++ )
-        Tijdom[i][j] = getLineAndConvertToDouble( file );
-    getLine( file );
-    // Tijc
-    for( i = 0; i < (int) Tijdom[0][1]; i++ )
-      for( j = 0; j < (int) Tijdom[1][1]; j++ )
-        for( k = 0; k < (int) Tijdom[2][1]; k++ )
-          for( l = 0; l < 64; l++ )
-            Tijc[i][j][k][l] = getLineAndConvertToDouble( file );
+    readSplinePI( file, piCCdom, piCC );
+    readSplinePI( file, piCHdom, piCH );
+    readSplinePI( file, piHHdom, piHH );
+    readSplinePI( file, Tijdom, Tijc );
 
     file.close( );
 
@@ -441,88 +160,67 @@ namespace AIREBO {
     inv_th_delta = 1.0 / ( thmax - thmin );
   }
 
-  void ForceField::allocateMemory( ) {
-    cutljsq = new double *[2];
-    cutljsq[0] = new double [2];
-    cutljsq[1] = new double [2];
-
-    lj1 = new double *[2];
-    lj1[0] = new double [2];
-    lj1[1] = new double [2];
-
-    lj2 = new double *[2];
-    lj2[0] = new double [2];
-    lj2[1] = new double [2];
-
-    lj3 = new double *[2];
-    lj3[0] = new double [2];
-    lj3[1] = new double [2];
-
-    lj4 = new double *[2];
-    lj4[0] = new double [2];
-    lj4[1] = new double [2];
+  void ForceField::readSplineGC( ifstream& ifs, double Vdom[5], double v1[4][6], double v2[4][6] ) {
+    for( int i = 0; i < 3; i++ )
+      getLine( ifs );
+    int nr_domains = getLineToInt( ifs );
+    for( int i = 0; i < nr_domains; i++ )
+      Vdom[i] = getLineToDouble( ifs );
+    getLine( ifs );
+    nr_domains--;
+    for( int i = 0; i < nr_domains; i++ )
+      for( int j = 0; j < 6; j++ )
+        v1[i][j] = getLineToDouble( ifs );
+    getLine( ifs );
+    for( int i = 0; i < nr_domains; i++ )
+      for( int j = 0; j < 6; j++ )
+        v2[i][j] = getLineToDouble( ifs );
   }
 
-  void ForceField::deallocateMemory( ) {
-    delete [] cutljsq[0];
-    delete [] cutljsq[1];
-    delete [] cutljsq;
-
-    delete [] lj1[0];
-    delete [] lj1[1];
-    delete [] lj1;
-
-    delete [] lj2[0];
-    delete [] lj2[1];
-    delete [] lj2;
-
-    delete [] lj3[0];
-    delete [] lj3[1];
-    delete [] lj3;
-
-    delete [] lj4[0];
-    delete [] lj4[1];
-    delete [] lj4;
-
-    if ( natoms != 0 )
-      deallocateREBO( );
+  void ForceField::readSplineGH( ifstream& ifs, double Vdom[4], double v[3][6] ) {
+    for( int i = 0; i < 3; i++ )
+      getLine( ifs );
+    int nr_domains = getLineToInt( ifs );
+    for( int i = 0; i < nr_domains; i++ )
+      Vdom[i] = getLineToDouble( ifs );
+    getLine( ifs );
+    nr_domains--;
+    for( int i = 0; i < nr_domains; i++ )
+      for( int j = 0; j < 6; j++ )
+        v[i][j] = getLineToDouble( ifs );
   }
 
-  void ForceField::initialize_constants( ) {
-    int i, j;
-    double tmp_cutmax;
-    double tmp;
-
-    for( i = 0; i < 2; i++ )
-      for( j = 0; j < 2; j++ ) {
-        tmp = pow( sigma[i][j], 6.0 );
-        lj4[i][j] = 4.0 * epsilon[i][j] * tmp;
-        lj3[i][j] = lj4[i][j] * tmp;
-        lj2[i][j] = lj4[i][j] * 6.0;
-        lj1[i][j] = lj3[i][j] * 12.0;
-        tmp = cutlj * sigma[i][j];
-        cutljsq[i][j] = tmp * tmp;
-      }
-
-    // promien odciecia dla czlonu REBO zadany przez promien odciecia dla C, gdyz jest on najwiekszy
-    cut3rebo = 3.0 * rcMax[0][0];
-    cutljrebo = rcLJmax[0][0] + rcMax[0][0];
-    cutljrebosq = cutljrebo * cutljrebo;
-
-    cutmax = cut3rebo;
-
-    if ( ljflag != 1 )
-      return;
-
-    tmp_cutmax = rcLJmax[0][0] + 2.0 * rcMax[0][0];
-    if ( tmp_cutmax > cutmax )
-      cutmax = tmp_cutmax;
-    tmp_cutmax = cutlj * sigma[0][0];
-    if ( tmp_cutmax > cutmax )
-      cutmax = tmp_cutmax;
+  void ForceField::readSplineP( ifstream& ifs, double Vdom[2][2], double v[4][4][16] ) {
+    for( int i = 0; i < 3; i++ )
+      getLine( ifs );
+    int nr_domains = getLineToInt( ifs );
+    int max = nr_domains / 2;
+    for( int i = 0; i < max; i++ )
+      for( int j = 0; j < max; j++ )
+        Vdom[i][j] = getLineToDouble( ifs );
+    getLine( ifs );
+    for( int i = 0, max_i = (int) Vdom[0][1]; i < max_i; i++ )
+      for( int j = 0, max_j = (int) Vdom[1][1]; j < max_j; j++ )
+        for( int k = 0; k < 16; k++ )
+          v[i][j][k] = getLineToDouble( ifs );
   }
 
-  void ForceField::initialize_splines( ) {
+  void ForceField::readSplinePI( ifstream& ifs, double Vdom[3][2], double v[4][4][9][64] ) {
+    for( int i = 0; i < 3; i++ )
+      getLine( ifs );
+    int nr_domains = getLineToInt( ifs );
+    for( int i = 0, max_i = nr_domains / 2; i < max_i; i++ )
+      for( int j = 0, max_j = nr_domains / 3; j < max_j; j++ )
+        Vdom[i][j] = getLineToDouble( ifs );
+    getLine( ifs );
+    for( int i = 0, max_i = (int) Vdom[0][1]; i < max_i; i++ )
+      for( int j = 0, max_j = (int) Vdom[1][1]; j < max_j; j++ )
+        for( int k = 0, max_k = (int) Vdom[2][1]; k < max_k; k++ )
+          for( int l = 0; l < 64; l++ )
+            v[i][j][k][l] = getLineToDouble( ifs );
+  }
+
+  void ForceField::initializeSplines( ) {
     int i, j, k;
 
     for( i = 0; i < 5; i++ )
@@ -664,8 +362,7 @@ namespace AIREBO {
     for( i = 4; i < 9; i++ )
       piCCdfdz[2][2][i] = -0.0033090;
 
-    // !!!komentarz: make top end of piCC flat instead of zero
-    //               also enforces some symmetry
+    // make top end of piCC flat instead of zero also enforces some symmetry
     i = 4;
     for( j = 0; j < 4; j++ )
       for( k = 1; k < 11; k++ )
@@ -705,8 +402,7 @@ namespace AIREBO {
     for( i = 4; i < 10; i++ )
       piCHf[1][3][i] = -0.10;
 
-    // !!!komentarz: make top end of piCH flat instead of zero
-    //               also enforces some symmetry
+    // make top end of piCH flat instead of zero also enforces some symmetry
     i = 4;
     for( j = 0; j < 4; j++ )
       for( k = 1; k < 11; k++ )

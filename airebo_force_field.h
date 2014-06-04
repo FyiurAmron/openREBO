@@ -4,7 +4,6 @@
 #ifndef AIREBO_FORCE_FIELD_H
 #define AIREBO_FORCE_FIELD_H
 
-#define _USE_MATH_DEFINES
 #include <math.h>
 #include <cmath>
 #include <cstdlib>
@@ -12,72 +11,126 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <cassert>
 
-#define AIREBO_DEBUG
+#define LEAN_REBO
 
-#include "nlists.h"
+#include "nlist.h"
 
 namespace AIREBO {
-  const double PI = 3.14159265358979323846, // 4.0 * std::atan(1.0)
-          TOL = 1.0e-9;
-  const int TYPE_COUNT = 2;
-
   using std::ifstream;
   using std::getline;
   using std::string;
   using std::endl;
   using std::istringstream;
   using std::cout;
-  using std::min;
-  using std::max;
 
   class ForceField {
+    friend class NList; // for the sake of SpXX
+
   public:
-    ForceField( string file_name, double cutlj,
-                bool ljflag, bool torflag, int max_number_of_REBO_neighbours );
-    ~ForceField( );
 
-    double getCutoffRadius( );
-    double compute( nLists &nl );
+    ForceField( const string& filename, double cutR_LJ_sigma,
+                bool LJ_flag, bool torsion_flag, int max_REBO_neighbours ) {
+      atom_list = nullptr;
 
-    double getTotalEnergy( );
-    double getREBOEnergy( );
-    double getLJEnergy( );
-    double getTORSIONEnergy( );
+      total_energy = 0.0;
+      energy_rebo = 0.0;
+      energy_lj = 0.0;
+      energy_torsion = 0.0;
+
+      readParameters( filename );
+      this->LJ_flag = LJ_flag;
+      if ( LJ_flag ) {
+        assert( cutR_LJ_sigma > 0.0 );
+        calcCutMax( cutR_LJ_sigma );
+      }
+      this->torsion_flag = torsion_flag;
+
+      assert( max_REBO_neighbours >= 1 );
+      this->max_REBO_neighbours = max_REBO_neighbours;
+
+      initializeSplines( );
+    }
+
+    virtual ~ForceField( ) {
+      if ( atom_list != nullptr )
+        delete atom_list;
+      if ( rebo_atom_list != nullptr )
+        delete rebo_atom_list;
+    };
+
+    double compute( ) {
+      assert( atom_list != nullptr );
+
+      total_energy = 0.0;
+      energy_rebo = 0.0;
+      energy_lj = 0.0;
+      energy_torsion = 0.0;
+      REBO_neighbours( );
+
+      E_REBO( );
+#ifndef LEAN_REBO
+      if ( LJ_flag )
+        E_LJ( );
+      if ( torsion_flag )
+        E_Torsion( );
+#endif
+
+      total_energy = energy_rebo + energy_lj + energy_torsion;
+
+      return total_energy;
+    }
+
+    void readNList( string filename ) {
+      if ( atom_list != nullptr )
+        delete atom_list;
+      if ( rebo_atom_list != nullptr )
+        delete rebo_atom_list;
+      atom_list = new NList( filename, this );
+    }
+
+    /*
+    void setList( NList* nl ) {
+      atom_list = nl;
+    }
+     */
+
+    double getCutoffRadius( ) {
+      return cutMax;
+    }
+
+    double getEnergyTotal( ) {
+      return total_energy;
+    }
+
+    double getEnergyREBO( ) {
+      return energy_rebo;
+    }
+
+    double getEnergyLJ( ) {
+      return energy_lj;
+    }
+
+    double getEnergyTorsion( ) {
+      return energy_torsion;
+    }
 
   private:
-    // ogolne parametry obliczen
-    int natoms;
-    int *type;
-
-    // sumy funkcji wagowych (czlon REBO)
-    double *nC, *nH;
-
-    // sasiedzi REBO
-    int *REBO_neighbours_num;
-    int **REBO_neighbours_list;
-    vec3d **REBO_neighbours_bonds;
-
-    // wszyscy sasiedzi
-    int *neighbours_num;
-    int **neighbours_list;
-    vec3d **neighbours_bonds;
-
-    // promien odciecia dla czlonu LJ, wyrazony w wielokrotnosciach parametru sigma potencjalu LJ
-    double cutlj;
-    double **cutljsq;
-    double **lj1, **lj2, **lj3, **lj4;
-    double cut3rebo, cutljrebo, cutljrebosq;
-    double cutmax;
-
-    // flagi: czy uwzgledniac czlon lj oraz czlon torsyjny
-    bool ljflag, torflag;
-    int max_number_of_REBO_neighbours;
+    bool LJ_flag, torsion_flag;
+    int max_REBO_neighbours;
 
     double total_energy, energy_rebo, energy_lj, energy_torsion;
 
-    // parametry potencjalu AIREBO
-    // a) czlon REBO
+    NList* atom_list;
+    RNList* rebo_atom_list;
+
+    double cutLJsq[2][2];
+    double lj1[2][2], lj2[2][2], lj3[2][2], lj4[2][2];
+    double cut3rebo, cutLJrebo, cutLJrebosq;
+    double cutMax;
+
+    // basic REBO vars
     double rcMin[TYPE_COUNT][TYPE_COUNT], rcMax[TYPE_COUNT][TYPE_COUNT];
     double rcMaxSq[TYPE_COUNT][TYPE_COUNT], rcMaxP[TYPE_COUNT][TYPE_COUNT];
     double pi_div_delta_RC[TYPE_COUNT][TYPE_COUNT], pi_div_delta_RCP[TYPE_COUNT][TYPE_COUNT];
@@ -87,13 +140,13 @@ namespace AIREBO {
     double NCmin, NCmax;
     double pi_div_delta_N, pi_div_delta_NC;
     double Q[TYPE_COUNT][TYPE_COUNT];
-    double alpha[TYPE_COUNT][TYPE_COUNT];
     double A[2][2];
+    double alpha[TYPE_COUNT][TYPE_COUNT];
+    double beta[TYPE_COUNT][TYPE_COUNT][3];
     double BIJc[TYPE_COUNT][TYPE_COUNT][3];
-    double Beta[TYPE_COUNT][TYPE_COUNT][3];
     double rho[TYPE_COUNT][TYPE_COUNT];
 
-    // b) czlon LJ
+    // LJ vars
     double rcLJmin[TYPE_COUNT][TYPE_COUNT], rcLJmax[TYPE_COUNT][TYPE_COUNT];
     double rcLJmaxsq[TYPE_COUNT][TYPE_COUNT];
     double bLJmin[TYPE_COUNT][TYPE_COUNT], bLJmax[TYPE_COUNT][TYPE_COUNT];
@@ -101,12 +154,11 @@ namespace AIREBO {
     double epsilon[TYPE_COUNT][TYPE_COUNT];
     double sigma[TYPE_COUNT][TYPE_COUNT];
 
-    // c) czlon torsyjny
-    double thmin, thmax,
-    inv_th_delta;
+    // torsion vars
+    double thmin, thmax, inv_th_delta;
     double epsilonT[TYPE_COUNT][TYPE_COUNT];
 
-    // d) splajny
+    // splines
     double gCdom[5], gC1[4][6], gC2[4][6];
     double gHdom[4], gH[3][6];
     double pCCdom[2][2], pCC[4][4][16];
@@ -116,7 +168,7 @@ namespace AIREBO {
     double piHHdom[3][2], piHH[4][4][9][64];
     double Tijdom[3][2], Tijc[4][4][9][64];
 
-    // splajny (polozenia wezlow)
+    // spline nodes
     double PCCf[5][5], PCCdfdx[5][5], PCCdfdy[5][5];
     double PCHf[5][5], PCHdfdx[5][5], PCHdfdy[5][5];
     double piCCf[5][5][11], piCCdfdx[5][5][11], piCCdfdy[5][5][11], piCCdfdz[5][5][11];
@@ -124,13 +176,17 @@ namespace AIREBO {
     double piHHf[5][5][11], piHHdfdx[5][5][11], piHHdfdy[5][5][11], piHHdfdz[5][5][11];
     double Tf[5][5][10], Tdfdx[5][5][10], Tdfdy[5][5][10], Tdfdz[5][5][10];
 
-    void readParameters( string file_name );
+    void readSplineGC( ifstream& ifs, double Vdom[5], double v1[4][6], double v2[4][6] );
+    void readSplineGH( ifstream& ifs, double Vdom[4], double v[3][6] );
+    void readSplineP( ifstream& ifs, double Vdom[2][2], double v[4][4][16] );
+    void readSplinePI( ifstream& ifs, double Vdom[3][2], double v[4][4][9][64] );
+
+    void readParameters( const string& file_name );
+    void initializeSplines( );
+
     void allocateMemory( );
     void deallocateMemory( );
-    void initialize_constants( );
-    void initialize_splines( );
 
-    // ewaluacja splajnow
     double gSpline( double costh, double Nij, int typei );
     double PijSpline( double NijC, double NijH, int typei, int typej );
     double piRCSpline( double Nij, double Nji, double Nijconj, int typei, int typej );
@@ -140,106 +196,73 @@ namespace AIREBO {
     double Spbicubic( double x, double y, double *coeffs );
     double Sptricubic( double x, double y, double z, double *coeffs );
 
-    double bond_order( int i, int j, double *rji_vec, double rji );
-    double bond_orderLJ( int i, int j, double *rji_vec, double rji, double rji0 );
-
     void REBO_neighbours( );
     void E_REBO( );
+    double bond_order( int i, int j, double *rji_vec, double rji );
+
+#ifndef LEAN_REBO
     void E_LJ( );
-    void E_TORSION( );
+    void E_Torsion( );
+    double bond_orderLJ( int i, int j, double *rji_vec, double rji, double rji0 );
+#endif
 
-    void getLine( ifstream &file ) {
+    string getLine( ifstream& ifs ) {
       string line;
-
-      getline( file, line );
-      if ( file.eof( ) ) {
-        cout << "error in AIREBOForceField::(): end of file reached!" << endl;
-        exit( 0 );
-      }
+      getline( ifs, line );
+      assert( !ifs.eof( ) );
+      return line;
     }
 
-    void allocateREBO( int number_of_atoms ) {
-      natoms = number_of_atoms;
-      nC = new double[natoms]( );
-      nH = new double[natoms]( );
-      REBO_neighbours_num = new int[natoms];
-      REBO_neighbours_list = new int*[natoms];
-      REBO_neighbours_bonds = new vec3d*[natoms];
-      for( int i = 0; i < natoms; i++ ) {
-        REBO_neighbours_list[i] = new int[max_number_of_REBO_neighbours];
-        REBO_neighbours_bonds[i] = new vec3d[max_number_of_REBO_neighbours];
-      }
-    }
-
-    void deallocateREBO( ) {
-      delete [] nC;
-      delete [] nH;
-      for( int i = 0; i < natoms; i++ ) {
-        delete [] REBO_neighbours_list[i];
-        delete [] REBO_neighbours_bonds[i];
-      }
-      delete [] REBO_neighbours_num;
-      delete [] REBO_neighbours_list;
-      delete [] REBO_neighbours_bonds;
-    }
-
-    double getLineAndConvertToDouble( ifstream &file ) {
-      string line;
-      istringstream iss;
+    double getLineToDouble( ifstream& ifs ) {
+      istringstream iss( getLine( ifs ) );
       double value;
-
-      getline( file, line );
-      if ( file.eof( ) ) {
-        cout << "error in AIREBOForceField::getLineAndConvertToDouble(): end of file reached!" << endl;
-        exit( 0 );
-      }
-
-      iss.str( line );
       iss >> value;
-      if ( value != value ) {
-        cout << "error in AIREBOForceField::getLineAndConvertToDouble(): conversion error!" << endl;
-        exit( 0 );
-      }
-
+      assert( value == value ); // !NaN
       return value;
     }
 
-    int getLineAndConvertToInt( ifstream &file ) {
-      string line;
-      istringstream iss;
+    int getLineToInt( ifstream& ifs ) {
+      istringstream iss( getLine( ifs ) );
       int value;
-
-      getline( file, line );
-      if ( file.eof( ) ) {
-        cout << "error in AIREBOForceField::getLineAndConvertToInt(): end of file reached!" << endl;
-        exit( 0 );
-      }
-
-      iss.str( line );
       iss >> value;
-      if ( value != value ) {
-        cout << "error in AIREBOForceField::getLineAndConvertToInt(): conversion error!" << endl;
-        exit( 0 );
-      }
-
       return value;
     }
 
-    /*
-    double min( double val1, double val2 ) {
-      return ( val1 < val2 ) ? val1 : val2;
+    void calcLJpair( int i, int j, double cutR_LJ_sigmas ) {
+      double tmp = pow( sigma[i][j], 6.0 );
+      lj4[i][j] = 4.0 * epsilon[i][j] * tmp;
+      lj3[i][j] = lj4[i][j] * tmp;
+      lj2[i][j] = lj4[i][j] * 6.0;
+      lj1[i][j] = lj3[i][j] * 12.0;
+      tmp = cutR_LJ_sigmas * sigma[i][j];
+      cutLJsq[i][j] = tmp * tmp;
     }
 
-    double max( double val1, double val2 ) {
-      return ( val1 > val2 ) ? val1 : val2;
-    }
+    void calcCutMax( double cutR_LJ_sigmas ) {
+      calcLJpair( 0, 0, cutR_LJ_sigmas );
+      calcLJpair( 0, 1, cutR_LJ_sigmas );
+      calcLJpair( 1, 1, cutR_LJ_sigmas );
+      lj4[1][0] = lj4[0][1];
+      lj3[1][0] = lj3[0][1];
+      lj2[1][0] = lj2[0][1];
+      lj1[1][0] = lj1[0][1];
+      cutLJsq[1][0] = cutLJsq[0][1];
 
-    double pow2( double arg ) {
-      return arg * arg;
-    }
-     */
-    double kronecker( const int a, const int b ) const {
-      return ( a == b ) ? 1.0 : 0.0;
+      cut3rebo = 3.0 * rcMax[0][0];
+      cutLJrebo = rcLJmax[0][0] + rcMax[0][0];
+      cutLJrebosq = cutLJrebo * cutLJrebo;
+
+      cutMax = cut3rebo;
+
+      if ( !LJ_flag )
+        return;
+
+      double tmp_cutmax = rcLJmax[0][0] + 2.0 * rcMax[0][0];
+      if ( tmp_cutmax > cutMax )
+        cutMax = tmp_cutmax;
+      tmp_cutmax = cutR_LJ_sigmas * sigma[0][0];
+      if ( tmp_cutmax > cutMax )
+        cutMax = tmp_cutmax;
     }
 
     double SpRC( double Xij, int type1, int type2 ) const {
@@ -276,20 +299,6 @@ namespace AIREBO {
       return 0.5 + 0.5 * cos( ( Xij - NCmin ) * pi_div_delta_NC );
     }
 
-    double Sp( double Xij, double Xmin, double Xmax ) const {
-      // funkcja odciecia Sp
-      double cutoff;
-      double t = ( Xij - Xmin ) / ( Xmax - Xmin );
-      // !!!nieoptymalnie, konieczne odraczanie dzielenia
-      if ( t <= 0.0 )
-        cutoff = 1.0;
-      else if ( t >= 1.0 )
-        cutoff = 0.0;
-      else
-        cutoff = 0.5 * ( 1.0 + cos( t * PI ) );
-      return cutoff;
-    }
-
     double Sp2th( double Xij ) const {
       if ( Xij <= thmin )
         return 1.0;
@@ -312,21 +321,6 @@ namespace AIREBO {
 
       return 1.0 - t * t * ( 3.0 - 2.0 * t );
     }
-/*
-    double Sp2( double Xij, double Xmin, double Xmax ) const {
-      // funkcja odciecia Sp2
-      double cutoff;
-      double t = ( Xij - Xmin ) / ( Xmax - Xmin );
-      // !!!nieoptymalnie, konieczne odraczanie dzielenia
-      if ( t <= 0.0 )
-        cutoff = 1.0;
-      else if ( t >= 1.0 )
-        cutoff = 0.0;
-      else
-        cutoff = ( 1.0 - ( t * t * ( 3.0 - 2.0 * t ) ) );
-      return cutoff;
-    }
- */
   };
 
 }

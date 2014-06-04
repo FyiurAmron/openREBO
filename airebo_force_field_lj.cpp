@@ -2,6 +2,8 @@
 
 #include "airebo_force_field.h"
 
+#ifndef LEAN_REBO
+
 namespace AIREBO {
 
   void ForceField::E_LJ( ) {
@@ -24,7 +26,7 @@ namespace AIREBO {
     vec3d *REBO_neighbours_bonds_k;
 
     double best;
-    int testpath, done;
+    bool testpath, done;
 
     double rji, rji_sq, rji_vec[3];
     double rki, rki_sq, rki_vec[3];
@@ -40,7 +42,7 @@ namespace AIREBO {
     double swidth, tee, tee2;
     double r2inv, r6inv;
     double vdw, VLJ, Str, VA, Stb;
-    double scale, delscale[3];
+    double delscale[3];
 
     rljmin = 0.0;
     rljmax = 0.0;
@@ -64,7 +66,7 @@ namespace AIREBO {
         jtype = type[j];
 
         rji_sq = neighbours_bonds_i[jj].r_sq;
-        if ( rji_sq >= cutljsq[itype][jtype] )
+        if ( rji_sq >= cutLJsq[itype][jtype] )
           continue;
 
         rji = neighbours_bonds_i[jj].r;
@@ -74,25 +76,22 @@ namespace AIREBO {
 
         if ( rji >= cut3rebo ) {
           best = 0.0;
-          testpath = 0;
+          testpath = false;
         } else if ( rji >= rcMax[itype][jtype] ) {
           best = 0.0;
-          testpath = 1;
+          testpath = true;
         } else {
-          best = Sp( rji, rcMin[itype][jtype], rcMax[itype][jtype] );
-          if ( best < 1.0 )
-            testpath = 1;
-          else
-            testpath = 0;
+          best = SpRC( rji, itype, jtype );
+          testpath = ( best < 1.0 );
         }
 
-        done = 0;
+        done = false;
         if ( testpath ) {
           REBO_neighbours_num_i = REBO_neighbours_num[i];
           REBO_neighbours_list_i = REBO_neighbours_list[i];
           REBO_neighbours_bonds_i = REBO_neighbours_bonds[i];
 
-          for( kk = 0; ( ( kk < REBO_neighbours_num_i ) && ( done == 0 ) ); kk++ ) {
+          for( kk = 0; ( kk < REBO_neighbours_num_i ) && !done; kk++ ) {
             k = REBO_neighbours_list_i[kk];
 
             if ( k == j )
@@ -106,67 +105,55 @@ namespace AIREBO {
             rki = REBO_neighbours_bonds_i[kk].r;
             rki_sq = REBO_neighbours_bonds_i[kk].r_sq;
 
-            if ( rki_sq < rcMaxSq[itype][ktype] )
-              wki = Sp( rki, rcMin[itype][ktype], rcMax[itype][ktype] );
-            else
-              wki = 0.0;
+            wki = ( rki_sq < rcMaxSq[itype][ktype] ) ? SpRC( rki, itype, ktype ) : 0.0;
 
-            if ( wki > best ) {
-              rkj_vec[0] = rki_vec[0] - rji_vec[0];
-              rkj_vec[1] = rki_vec[1] - rji_vec[1];
-              rkj_vec[2] = rki_vec[2] - rji_vec[2];
-              rkj_sq = rkj_vec[0] * rkj_vec[0] + rkj_vec[1] * rkj_vec[1] + rkj_vec[2] * rkj_vec[2];
+            if ( wki <= best )
+              continue;
+            diff( rkj_vec, rki_vec, rji_vec );
+            rkj_sq = length_sq( rkj_vec );
 
-              if ( rkj_sq < rcMaxSq[ktype][jtype] ) {
-                rkj = sqrt( rkj_sq );
-                wkj = Sp( rkj, rcMin[ktype][jtype], rcMax[ktype][jtype] );
-                if ( wki * wkj > best ) {
-                  best = wki * wkj;
-                  if ( best == 1.0 ) {
-                    done = 1;
-                    break;
-                  }
-                }
+            if ( rkj_sq < rcMaxSq[ktype][jtype] ) {
+              rkj = sqrt( rkj_sq );
+              wkj = SpRC( rkj, ktype, jtype );
+              if ( wki * wkj > best ) {
+                best = wki * wkj;
+                if ( best == 1.0 )
+                  break;
               }
+            }
 
-              REBO_neighbours_num_k = REBO_neighbours_num[k];
-              REBO_neighbours_list_k = REBO_neighbours_list[k];
-              REBO_neighbours_bonds_k = REBO_neighbours_bonds[k];
-              for( mm = 0; ( ( mm < REBO_neighbours_num_k ) && ( done == 0 ) ); mm++ ) {
-                m = REBO_neighbours_list_k[mm];
+            REBO_neighbours_num_k = REBO_neighbours_num[k];
+            REBO_neighbours_list_k = REBO_neighbours_list[k];
+            REBO_neighbours_bonds_k = REBO_neighbours_bonds[k];
+            for( mm = 0; mm < REBO_neighbours_num_k /*&& !done*/; mm++ ) {
+              m = REBO_neighbours_list_k[mm];
 
-                if ( ( m == i ) || ( m == j ) )
-                  continue;
+              if ( ( m == i ) || ( m == j ) )
+                continue;
 
-                mtype = type[m];
+              mtype = type[m];
 
-                rmk_vec[0] = REBO_neighbours_bonds_k[mm].x;
-                rmk_vec[1] = REBO_neighbours_bonds_k[mm].y;
-                rmk_vec[2] = REBO_neighbours_bonds_k[mm].z;
-                rmk = REBO_neighbours_bonds_k[mm].r;
-                rmk_sq = REBO_neighbours_bonds_k[mm].r_sq;
+              rmk_vec[0] = REBO_neighbours_bonds_k[mm].x;
+              rmk_vec[1] = REBO_neighbours_bonds_k[mm].y;
+              rmk_vec[2] = REBO_neighbours_bonds_k[mm].z;
+              rmk = REBO_neighbours_bonds_k[mm].r;
+              rmk_sq = REBO_neighbours_bonds_k[mm].r_sq;
 
-                if ( rmk_sq < rcMaxSq[ktype][mtype] )
-                  wmk = Sp( rmk, rcMin[ktype][mtype], rcMax[ktype][mtype] );
-                else
-                  wmk = 0.0;
+              wmk = ( rmk_sq < rcMaxSq[ktype][mtype] ) ? SpRC( rmk, ktype, mtype ) : 0.0;
 
-                if ( wki * wmk > best ) {
-                  rmj_vec[0] = rmk_vec[0] + rkj_vec[0];
-                  rmj_vec[1] = rmk_vec[1] + rkj_vec[1];
-                  rmj_vec[2] = rmk_vec[2] + rkj_vec[2];
-                  rmj_sq = rmj_vec[0] * rmj_vec[0] + rmj_vec[1] * rmj_vec[1] + rmj_vec[2] * rmj_vec[2];
+              if ( wki * wmk <= best )
+                continue;
+              sum( rmj_vec, rmk_vec, rkj_vec );
+              rmj_sq = rmj_vec[0] * rmj_vec[0] + rmj_vec[1] * rmj_vec[1] + rmj_vec[2] * rmj_vec[2];
 
-                  if ( rmj_sq < rcMaxSq[mtype][jtype] ) {
-                    rmj = sqrt( rmj_sq );
-                    wmj = Sp( rmj, rcMin[mtype][jtype], rcMax[mtype][jtype] );
-                    if ( wki * wmk * wmj > best ) {
-                      best = wki * wmk * wmj;
-                      if ( best == 1.0 ) {
-                        done = 1;
-                        break;
-                      }
-                    }
+              if ( rmj_sq < rcMaxSq[mtype][jtype] ) {
+                rmj = sqrt( rmj_sq );
+                wmj = SpRC( rmj, mtype, jtype );
+                if ( wki * wmk * wmj > best ) {
+                  best = wki * wmk * wmj;
+                  if ( best == 1.0 ) {
+                    done = true;
+                    break;
                   }
                 }
               }
@@ -206,10 +193,7 @@ namespace AIREBO {
         Str = Sp2bLJ( rji, itype, jtype );
         VA = Str * cij * VLJ;
         if ( Str > 0.0 ) {
-          scale = rcMin[itype][jtype] / rji;
-          delscale[0] = scale * rji_vec[0];
-          delscale[1] = scale * rji_vec[1];
-          delscale[2] = scale * rji_vec[2];
+          scale( delscale, rji_vec, rcMin[itype][jtype] / rji );
           Stb = bond_orderLJ( i, j, delscale, rcMin[itype][jtype], rji );
         } else
           Stb = 0.0;
@@ -245,8 +229,6 @@ namespace AIREBO {
     double rli_vec[3], rli_sq;
 
     double wki, wlj;
-    double lamdajik, lamdaijl;
-    double Nki, Nlj;
     double cosjik, cosijl;
     double g;
 
@@ -260,8 +242,8 @@ namespace AIREBO {
     double costmp;
     double tspjik, tspijl;
 
-    double crosskij[3], crosskijmag;
-    double crossijl[3], crossijlmag;
+    double crosskij[3];
+    double crossijl[3];
     double omkijl;
 
     atomi = i;
@@ -269,11 +251,21 @@ namespace AIREBO {
     itype = type[atomi];
     jtype = type[atomj];
 
-    wij = Sp( rji0, rcMin[itype][jtype], rcMax[itype][jtype] );
-    NijC = nC[atomi] - ( wij * kronecker( jtype, 0 ) );
-    NijH = nH[atomi] - ( wij * kronecker( jtype, 1 ) );
-    NjiC = nC[atomj] - ( wij * kronecker( itype, 0 ) );
-    NjiH = nH[atomj] - ( wij * kronecker( itype, 1 ) );
+    wij = SpRC( rji0, itype, jtype );
+
+    NijC = nC[atomi];
+    NijH = nH[atomi];
+    NjiC = nC[atomj];
+    NjiH = nH[atomj];
+
+    if ( itype == 0 )
+      NjiC -= wij;
+    else
+      NjiH -= wij;
+    if ( jtype == 0 )
+      NijC -= wij;
+    else
+      NijH -= wij;
 
     bij = 0.0;
     NconjtmpI = 0.0;
@@ -286,27 +278,23 @@ namespace AIREBO {
     REBO_neighbours_bonds_i = REBO_neighbours_bonds[i];
     for( k = 0; k < REBO_neighbours_num_i; k++ ) {
       atomk = REBO_neighbours_list_i[k];
-      if ( atomk != atomj ) {
-        ktype = type[atomk];
+      if ( atomk == atomj )
+        continue;
+      ktype = type[atomk];
 
-        rki_vec[0] = REBO_neighbours_bonds_i[k].x;
-        rki_vec[1] = REBO_neighbours_bonds_i[k].y;
-        rki_vec[2] = REBO_neighbours_bonds_i[k].z;
-        rki = REBO_neighbours_bonds_i[k].r;
+      rki_vec[0] = REBO_neighbours_bonds_i[k].x;
+      rki_vec[1] = REBO_neighbours_bonds_i[k].y;
+      rki_vec[2] = REBO_neighbours_bonds_i[k].z;
+      rki = REBO_neighbours_bonds_i[k].r;
 
-        lamdajik = 4.0 * kronecker( itype, 1 ) *
-                ( ( rho[ktype][1] - rki ) - ( rho[jtype][1] - rji ) );
-        wki = Sp( rki, rcMin[itype][ktype], rcMax[itype][ktype] );
-        Nki = nC[atomk] - ( wki * kronecker( itype, 0 ) ) +
-                nH[atomk] - ( wki * kronecker( itype, 1 ) );
-        cosjik = ( ( rji_vec[0] * rki_vec[0] ) + ( rji_vec[1] * rki_vec[1] ) + ( rji_vec[2] * rki_vec[2] ) ) / ( rji * rki );
-        cosjik = min( cosjik, 1.0 );
-        cosjik = max( cosjik, -1.0 );
+      wki = SpRC( rki, itype, ktype );
+      cosjik = cos_theta_clamp( rji_vec, rki_vec, rji, rki );
 
-        g = gSpline( cosjik, ( NijC + NijH ), itype );
-        Etmp += ( wki * g * exp( lamdajik ) );
-        NconjtmpI = NconjtmpI + ( kronecker( ktype, 0 ) * wki * Sp( Nki, Nmin, Nmax ) );
-      }
+      g = gSpline( cosjik, ( NijC + NijH ), itype );
+      if ( itype == 1 )
+        Etmp += wki * g * exp( 4.0 * ( rho[ktype][1] - rki - rho[jtype][1] + rji ) );
+      if ( ktype == 0 )
+        NconjtmpI += wki * SpN( nC[atomk] + nH[atomk] - wki );
     }
 
     PijS = 0.0;
@@ -320,116 +308,99 @@ namespace AIREBO {
     REBO_neighbours_bonds_j = REBO_neighbours_bonds[j];
     for( l = 0; l < REBO_neighbours_num_j; l++ ) {
       atoml = REBO_neighbours_list_j[l];
-      if ( atoml != atomi ) {
-        ltype = type[atoml];
-        rlj_vec[0] = REBO_neighbours_bonds_j[l].x;
-        rlj_vec[1] = REBO_neighbours_bonds_j[l].y;
-        rlj_vec[2] = REBO_neighbours_bonds_j[l].z;
-        rlj = REBO_neighbours_bonds_j[l].r;
+      if ( atoml == atomi )
+        continue;
+      ltype = type[atoml];
+      rlj_vec[0] = REBO_neighbours_bonds_j[l].x;
+      rlj_vec[1] = REBO_neighbours_bonds_j[l].y;
+      rlj_vec[2] = REBO_neighbours_bonds_j[l].z;
+      rlj = REBO_neighbours_bonds_j[l].r;
 
-        lamdaijl = 4.0 * kronecker( jtype, 1 ) *
-                ( ( rho[ltype][1] - rlj ) - ( rho[itype][1] - rji ) );
-        wlj = Sp( rlj, rcMin[jtype][ltype], rcMax[jtype][ltype] );
-        Nlj = nC[atoml] - ( wlj * kronecker( jtype, 0 ) ) +
-                nH[atoml] - ( wlj * kronecker( jtype, 1 ) );
-        cosijl = -1.0 * ( ( rji_vec[0] * rlj_vec[0] ) + ( rji_vec[1] * rlj_vec[1] ) + ( rji_vec[2] * rlj_vec[2] ) ) / ( rji * rlj );
-        cosijl = min( cosijl, 1.0 );
-        cosijl = max( cosijl, -1.0 );
+      wlj = SpRC( rlj, jtype, ltype );
+      cosijl = cos_theta_clamp( rji_vec, rlj_vec, rji, rlj );
 
-        g = gSpline( cosijl, NjiC + NjiH, jtype );
-        Etmp += ( wlj * g * exp( lamdaijl ) );
-        NconjtmpJ = NconjtmpJ + ( kronecker( ltype, 0 ) * wlj * Sp( Nlj, Nmin, Nmax ) );
-      }
+      g = gSpline( cosijl, NjiC + NjiH, jtype );
+      if ( jtype == 1 )
+        Etmp += wlj * g * exp( 4.0 * ( rho[ltype][1] - rlj - rho[itype][1] + rji ) );
+      if ( ltype == 0 )
+        NconjtmpJ += wlj * SpN( nC[atoml] + nH[atoml] - wlj );
     }
 
     PjiS = 0.0;
     PjiS = PijSpline( NjiC, NjiH, jtype, itype );
     pji = pow( 1.0 + Etmp + PjiS, -0.5 );
 
-    Nijconj = 1.0 + ( NconjtmpI * NconjtmpI ) + ( NconjtmpJ * NconjtmpJ );
+    Nijconj = 1.0 + NconjtmpI * NconjtmpI + NconjtmpJ * NconjtmpJ;
     piRC = piRCSpline( NijC + NijH, NjiC + NjiH, Nijconj, itype, jtype );
     Tij = 0.0;
-    if ( ( itype == 0 ) && ( jtype == 0 ) )
+    if ( itype == 0 && jtype == 0 )
       Tij = TijSpline( NijC + NijH, NjiC + NjiH, Nijconj );
 
+    if ( fabs( Tij ) <= TOL )
+      return Sp2bLJ( 0.5 * ( pij + pji ) + piRC, itype, jtype );
+
     Etmp = 0.0;
-    if ( fabs( Tij ) > TOL ) {
-      REBO_neighbours_num_i = REBO_neighbours_num[i];
-      REBO_neighbours_list_i = REBO_neighbours_list[i];
-      REBO_neighbours_bonds_i = REBO_neighbours_bonds[i];
-      for( k = 0; k < REBO_neighbours_num_i; k++ ) {
-        atomk = REBO_neighbours_list_i[k];
-        ktype = type[atomk];
-        if ( atomk != atomj ) {
-          rki_vec[0] = REBO_neighbours_bonds_i[k].x;
-          rki_vec[1] = REBO_neighbours_bonds_i[k].y;
-          rki_vec[2] = REBO_neighbours_bonds_i[k].z;
-          rki = REBO_neighbours_bonds_i[k].r;
-          cos321 = ( ( rji_vec[0] * rki_vec[0] ) + ( rji_vec[1] * rki_vec[1] ) + ( rji_vec[2] * rki_vec[2] ) ) / ( rji * rki );
-          cos321 = min( cos321, 1.0 );
-          cos321 = max( cos321, -1.0 );
+    REBO_neighbours_num_i = REBO_neighbours_num[i];
+    REBO_neighbours_list_i = REBO_neighbours_list[i];
+    REBO_neighbours_bonds_i = REBO_neighbours_bonds[i];
+    for( k = 0; k < REBO_neighbours_num_i; k++ ) {
+      atomk = REBO_neighbours_list_i[k];
+      ktype = type[atomk];
+      if ( atomk == atomj )
+        continue;
+      rki_vec[0] = REBO_neighbours_bonds_i[k].x;
+      rki_vec[1] = REBO_neighbours_bonds_i[k].y;
+      rki_vec[2] = REBO_neighbours_bonds_i[k].z;
+      rki = REBO_neighbours_bonds_i[k].r;
+      cos321 = cos_theta_clamp( rji_vec, rki_vec, rji, rki );
 
-          rkj_vec[0] = rki_vec[0] - rji_vec[0];
-          rkj_vec[1] = rki_vec[1] - rji_vec[1];
-          rkj_vec[2] = rki_vec[2] - rji_vec[2];
-          rkj_sq = ( rkj_vec[0] * rkj_vec[0] ) + ( rkj_vec[1] * rkj_vec[1] ) + ( rkj_vec[2] * rkj_vec[2] );
+      diff( rkj_vec, rki_vec, rji_vec );
+      rkj_sq = length_sq( rkj_vec );
 
-          rji_sq = rji * rji;
-          rki_sq = rki * rki;
-          costmp = 0.5 * ( rji_sq + rki_sq - rkj_sq ) / rji / rki;
-          tspjik = Sp2th( costmp );
+      rji_sq = rji * rji;
+      rki_sq = rki * rki;
+      costmp = 0.5 * ( rji_sq + rki_sq - rkj_sq ) / rji / rki;
+      tspjik = Sp2th( costmp );
 
-          if ( sqrt( 1.0 - cos321 * cos321 ) > sqrt( TOL ) ) {
-            wki = Sp( rki, rcMin[itype][ktype], rcMaxP[itype][ktype] );
+      if ( 1.0 - cos321 * cos321 <= TOL )
+        continue;
+      wki = SpRCP( rki, itype, ktype );
 
-            REBO_neighbours_num_j = REBO_neighbours_num[j];
-            REBO_neighbours_list_j = REBO_neighbours_list[j];
-            REBO_neighbours_bonds_j = REBO_neighbours_bonds[j];
-            for( l = 0; l < REBO_neighbours_num_j; l++ ) {
-              atoml = REBO_neighbours_list_j[l];
-              ltype = type[atoml];
-              if ( !( ( atoml == atomi ) || ( atoml == atomk ) ) ) {
-                rlj_vec[0] = REBO_neighbours_bonds_j[l].x;
-                rlj_vec[1] = REBO_neighbours_bonds_j[l].y;
-                rlj_vec[2] = REBO_neighbours_bonds_j[l].z;
-                rlj = REBO_neighbours_bonds_j[l].r;
+      REBO_neighbours_num_j = REBO_neighbours_num[j];
+      REBO_neighbours_list_j = REBO_neighbours_list[j];
+      REBO_neighbours_bonds_j = REBO_neighbours_bonds[j];
+      for( l = 0; l < REBO_neighbours_num_j; l++ ) {
+        atoml = REBO_neighbours_list_j[l];
+        ltype = type[atoml];
+        if ( atoml == atomi || atoml == atomk )
+          continue;
+        rlj_vec[0] = REBO_neighbours_bonds_j[l].x;
+        rlj_vec[1] = REBO_neighbours_bonds_j[l].y;
+        rlj_vec[2] = REBO_neighbours_bonds_j[l].z;
+        rlj = REBO_neighbours_bonds_j[l].r;
+        rlj_sq = REBO_neighbours_bonds_j[l].r_sq;
 
-                cos234 = -( ( rji_vec[0] * rlj_vec[0] ) + ( rji_vec[1] * rlj_vec[1] ) + ( rji_vec[2] * rlj_vec[2] ) ) / ( rji * rlj );
-                cos234 = min( cos234, 1.0 );
-                cos234 = max( cos234, -1.0 );
+        cos234 = cos_theta_clamp( rji_vec, rlj_vec, rji, rlj );
 
-                rli_vec[0] = rji_vec[0] + rlj_vec[0];
-                rli_vec[1] = rji_vec[1] + rlj_vec[1];
-                rli_vec[2] = rji_vec[2] + rlj_vec[2];
+        sum( rli_vec, rji_vec, rlj_vec );
 
-                rli_sq = ( rli_vec[0] * rli_vec[0] ) + ( rli_vec[1] * rli_vec[1] ) + ( rli_vec[2] * rli_vec[2] );
-                rlj_sq = rlj * rlj;
-                costmp = 0.5 * ( rji_sq + rlj_sq - rli_sq ) / rji / rlj;
-                tspijl = Sp2th( costmp );
+        rli_sq = ( rli_vec[0] * rli_vec[0] ) + ( rli_vec[1] * rli_vec[1] ) + ( rli_vec[2] * rli_vec[2] );
+        costmp = 0.5 * ( rji_sq + rlj_sq - rli_sq ) / rji / rlj;
+        tspijl = Sp2th( costmp );
 
-                if ( sqrt( 1.0 - cos234 * cos234 ) > sqrt( TOL ) ) {
-                  wlj = Sp( rlj, rcMin[jtype][ltype], rcMaxP[jtype][ltype] );
-                  crosskij[0] = ( rji_vec[1] * rki_vec[2] - rji_vec[2] * rki_vec[1] );
-                  crosskij[1] = ( rji_vec[2] * rki_vec[0] - rji_vec[0] * rki_vec[2] );
-                  crosskij[2] = ( rji_vec[0] * rki_vec[1] - rji_vec[1] * rki_vec[0] );
-                  crosskijmag = sqrt( crosskij[0] * crosskij[0] + crosskij[1] * crosskij[1] + crosskij[2] * crosskij[2] );
-                  crossijl[0] = ( rji_vec[1] * rlj_vec[2] - rji_vec[2] * rlj_vec[1] );
-                  crossijl[1] = ( rji_vec[2] * rlj_vec[0] - rji_vec[0] * rlj_vec[2] );
-                  crossijl[2] = ( rji_vec[0] * rlj_vec[1] - rji_vec[1] * rlj_vec[0] );
-                  crossijlmag = sqrt( crossijl[0] * crossijl[0] + crossijl[1] * crossijl[1] + crossijl[2] * crossijl[2] );
-                  omkijl = -1.0 * ( ( ( crosskij[0] * crossijl[0] ) + ( crosskij[1] * crossijl[1] ) + ( crosskij[2] * crossijl[2] ) ) / ( crosskijmag * crossijlmag ) );
-                  Etmp += ( ( 1.0 - omkijl * omkijl ) * wki * wlj ) * ( 1.0 - tspjik ) * ( 1.0 - tspijl );
-                }
-              }
-            }
-          }
-        }
+        if ( 1.0 - cos234 * cos234 <= TOL )
+          continue;
+
+        wlj = SpRC( rlj, jtype, ltype );
+        cross( crosskij, rji_vec, rki_vec );
+        cross( crossijl, rji_vec, rlj_vec );
+        cos_theta_clamp( crosskij, crossijl, length( crosskij ), length( crossijl ) );
+        Etmp += ( 1.0 - omkijl * omkijl ) * wki * wlj * ( 1.0 - tspjik ) * ( 1.0 - tspijl );
       }
     }
 
-    bij = 0.5 * ( pij + pji ) + piRC + Tij * Etmp;
-
-    return Sp2bLJ( bij, itype, jtype );
+    return Sp2bLJ( 0.5 * ( pij + pji ) + piRC + Tij * Etmp, itype, jtype );
   }
 
 }
+#endif

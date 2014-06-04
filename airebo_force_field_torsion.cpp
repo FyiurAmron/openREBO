@@ -2,14 +2,15 @@
 
 #include "airebo_force_field.h"
 
+#ifndef LEAN_REBO
+
 namespace AIREBO {
 
-  void ForceField::E_TORSION( ) {
+  void ForceField::E_Torsion( ) {
     int itype;
     int j, jtype;
     int k, ktype;
     int l, ltype;
-    int jj, kk, ll;
 
     int REBO_neighbours_num_i;
     int *REBO_neighbours_list_i;
@@ -29,7 +30,6 @@ namespace AIREBO {
 
     double cos321, sin321;
     double cos234, sin234;
-    double costmp;
     double cross321[3], cross234[3];
 
     double cwnum, cwnom, cw, cw2;
@@ -48,7 +48,7 @@ namespace AIREBO {
       REBO_neighbours_list_i = REBO_neighbours_list[i];
       REBO_neighbours_bonds_i = REBO_neighbours_bonds[i];
 
-      for( jj = 0; jj < REBO_neighbours_num_i; jj++ ) {
+      for( int jj = 0; jj < REBO_neighbours_num_i; jj++ ) {
         j = REBO_neighbours_list_i[jj];
 
         if ( i < j )
@@ -65,15 +65,13 @@ namespace AIREBO {
         rji = REBO_neighbours_bonds_i[jj].r;
         rji_sq = REBO_neighbours_bonds_i[jj].r_sq;
 
-        rij_vec[0] = -rji_vec[0];
-        rij_vec[1] = -rji_vec[1];
-        rij_vec[2] = -rji_vec[2];
+        neg( rij_vec, rji_vec );
         rij = rji;
         rij_sq = rji_sq;
 
-        wji = Sp( rji, rcMin[itype][jtype], rcMax[itype][jtype] );
+        wji = SpRC( rji, itype, jtype );
 
-        for( kk = 0; kk < REBO_neighbours_num_i; kk++ ) {
+        for( int kk = 0; kk < REBO_neighbours_num_i; kk++ ) {
           k = REBO_neighbours_list_i[kk];
 
           ktype = type[k];
@@ -87,35 +85,29 @@ namespace AIREBO {
           rki = REBO_neighbours_bonds_i[kk].r;
           rki_sq = REBO_neighbours_bonds_i[kk].r_sq;
 
-          cos321 = -( ( rki_vec[0] * rij_vec[0] ) + ( rki_vec[1] * rij_vec[1] ) + ( rki_vec[2] * rij_vec[2] ) ) / ( rki * rij );
-          cos321 = min( cos321, 1.0 );
-          cos321 = max( cos321, -1.0 );
+          cos321 = cos_theta_clamp( rki_vec, rij_vec, rki, rij );
           sin321 = sqrt( 1.0 - cos321 * cos321 );
 
           if ( sin321 < TOL )
             continue;
 
-          rkj_vec[0] = rki_vec[0] - rji_vec[0];
-          rkj_vec[1] = rki_vec[1] - rji_vec[1];
-          rkj_vec[2] = rki_vec[2] - rji_vec[2];
+          diff( rkj_vec, rki_vec, rji_vec );
+          rkj_sq = length_sq( rkj_vec );
 
-          rkj_sq = rkj_vec[0] * rkj_vec[0] + rkj_vec[1] * rkj_vec[1] + rkj_vec[2] * rkj_vec[2];
+          wki = SpRC( rki, itype, ktype );
 
-          wki = Sp( rki, rcMin[itype][ktype], rcMax[itype][ktype] );
-
-          costmp = 0.5 * ( rij_sq + rki_sq - rkj_sq ) / rij / rki;
-          tspjik = Sp2th( costmp );
+          tspjik = Sp2th( 0.5 * ( rij_sq + rki_sq - rkj_sq ) / ( rij * rki ) );
 
           REBO_neighbours_num_j = REBO_neighbours_num[j];
           REBO_neighbours_list_j = REBO_neighbours_list[j];
           REBO_neighbours_bonds_j = REBO_neighbours_bonds[j];
 
-          for( ll = 0; ll < REBO_neighbours_num_j; ll++ ) {
+          for( int ll = 0; ll < REBO_neighbours_num_j; ll++ ) {
             l = REBO_neighbours_list_j[ll];
 
             ltype = type[l];
 
-            if ( ( l == i ) || ( l == k ) )
+            if ( l == i || l == k )
               continue;
 
             rlj_vec[0] = REBO_neighbours_bonds_j[ll].x;
@@ -124,33 +116,23 @@ namespace AIREBO {
             rlj = REBO_neighbours_bonds_j[ll].r;
             rlj_sq = REBO_neighbours_bonds_j[ll].r_sq;
 
-            cos234 = ( rij_vec[0] * rlj_vec[0] + rij_vec[1] * rlj_vec[1] + rij_vec[2] * rlj_vec[2] ) / ( rij * rlj );
-            cos234 = min( cos234, 1.0 );
-            cos234 = max( cos234, -1.0 );
+            cos234 = cos_theta_clamp( rij_vec, rlj_vec, rij, rlj );
             sin234 = sqrt( 1.0 - cos234 * cos234 );
 
             if ( sin234 < TOL )
               continue;
 
-            wlj = Sp( rlj, rcMin[jtype][ltype], rcMax[jtype][ltype] );
+            wlj = SpRC( rlj, jtype, ltype );
 
-            rli_vec[0] = rji_vec[0] + rlj_vec[0];
-            rli_vec[1] = rji_vec[1] + rlj_vec[1];
-            rli_vec[2] = rji_vec[2] + rlj_vec[2];
-            rli_sq = rli_vec[0] * rli_vec[0] + rli_vec[1] * rli_vec[1] + rli_vec[2] * rli_vec[2];
+            sum( rli_vec, rji_vec, rlj_vec );
+            rli_sq = length_sq( rli_vec );
 
-            costmp = 0.5 * ( rji_sq + rlj_sq - rli_sq ) / rji / rlj;
-            tspijl = Sp2th( costmp );
+            tspijl = Sp2th( 0.5 * ( rji_sq + rlj_sq - rli_sq ) / ( rji * rlj ) );
 
-            cross321[0] = ( rij_vec[1] * rki_vec[2] ) - ( rij_vec[2] * rki_vec[1] );
-            cross321[1] = ( rij_vec[2] * rki_vec[0] ) - ( rij_vec[0] * rki_vec[2] );
-            cross321[2] = ( rij_vec[0] * rki_vec[1] ) - ( rij_vec[1] * rki_vec[0] );
+            cross( cross321, rij_vec, rki_vec );
+            cross( cross234, rji_vec, rlj_vec );
 
-            cross234[0] = ( rji_vec[1] * rlj_vec[2] ) - ( rji_vec[2] * rlj_vec[1] );
-            cross234[1] = ( rji_vec[2] * rlj_vec[0] ) - ( rji_vec[0] * rlj_vec[2] );
-            cross234[2] = ( rji_vec[0] * rlj_vec[1] ) - ( rji_vec[1] * rlj_vec[0] );
-
-            cwnum = ( cross321[0] * cross234[0] ) + ( cross321[1] * cross234[1] ) + ( cross321[2] * cross234[2] );
+            cwnum = dot( cross321, cross234 );
             cwnom = rki * rlj * rij * rij * sin321 * sin234;
 
             cw = 0.5 - 0.5 * cwnum / cwnom;
@@ -167,3 +149,5 @@ namespace AIREBO {
   }
 
 }
+
+#endif

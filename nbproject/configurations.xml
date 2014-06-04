@@ -5,7 +5,10 @@
                    displayName="Header Files"
                    projectFiles="true">
       <itemPath>airebo_force_field.h</itemPath>
-      <itemPath>nlists.h</itemPath>
+      <itemPath>const.h</itemPath>
+      <itemPath>cutoff.h</itemPath>
+      <itemPath>nlist.h</itemPath>
+      <itemPath>vector.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -20,6 +23,7 @@
       <itemPath>airebo_force_field_splines.cpp</itemPath>
       <itemPath>airebo_force_field_torsion.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
+      <itemPath>nlist.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -58,9 +62,17 @@
       </item>
       <item path="airebo_force_field_torsion.cpp" ex="false" tool="1" flavor2="0">
       </item>
+      <item path="const.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="cutoff.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="nlists.h" ex="false" tool="3" flavor2="0">
+      <item path="nlist.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="nlist.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="vector.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
     <conf name="Release" type="1">
@@ -95,9 +107,17 @@
       </item>
       <item path="airebo_force_field_torsion.cpp" ex="false" tool="1" flavor2="0">
       </item>
+      <item path="const.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="cutoff.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="nlists.h" ex="false" tool="3" flavor2="0">
+      <item path="nlist.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="nlist.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="vector.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
   </confs>

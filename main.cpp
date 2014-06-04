@@ -9,16 +9,20 @@
 #include <cstdio>
 
 #include "airebo_force_field.h"
+#include "nlist.h"
 
 using namespace std;
+using namespace AIREBO;
 
 /*
  *
  */
 int main( int argc, char** argv ) {
   printf( "test\n" );
-  AIREBO::ForceField* aff = new AIREBO::ForceField( "CH.airebo", 0.0, false, false, 256 );
-  //aff->compute()
+  ForceField aff( "CH.airebo", 0.0, false, false, 256 );
+  aff.readNList( "small.nlists" );
+  aff.compute( );
+  cout << aff.getEnergyTotal();
   return 0;
 }
 

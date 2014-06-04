@@ -40,7 +40,8 @@ OBJECTFILES= \
 	${OBJECTDIR}/airebo_force_field_rebo.o \
 	${OBJECTDIR}/airebo_force_field_splines.o \
 	${OBJECTDIR}/airebo_force_field_torsion.o \
-	${OBJECTDIR}/main.o
+	${OBJECTDIR}/main.o \
+	${OBJECTDIR}/nlist.o
 
 
 # C Compiler Flags
@@ -96,6 +97,11 @@ ${OBJECTDIR}/main.o: main.cpp
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
+
+${OBJECTDIR}/nlist.o: nlist.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/nlist.o nlist.cpp
 
 # Subprojects
 .build-subprojects:
