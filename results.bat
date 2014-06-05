@@ -1,0 +1,1 @@
+@dist\Release\MinGW_2014-Windows\airebo.exe > results_%RANDOM%.txt

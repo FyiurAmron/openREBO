@@ -83,7 +83,10 @@
           <developmentMode>5</developmentMode>
         </cTool>
         <ccTool>
-          <developmentMode>5</developmentMode>
+          <developmentMode>6</developmentMode>
+          <standard>8</standard>
+          <commandLine>-ffast-math -DNDEBUG -march=native</commandLine>
+          <warningLevel>2</warningLevel>
         </ccTool>
         <fortranCompilerTool>
           <developmentMode>5</developmentMode>

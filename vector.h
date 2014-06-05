@@ -61,21 +61,21 @@ T length( const T v[3] ) {
 
 template <typename T >
 T cos_theta_clamp( const T v0[3], const T v1[3], T len0, T len1 ) {
-  T val = ( v0[0] * v1[0] + v0[1] * v1[1] + v0[2] * v1[2] ) / ( len0 * len1 );
+  T val = dot( v0, v1 ) / ( len0 * len1 );
   if ( val > 1.0 )
     return 1.0;
-  else if ( val < 1.0 )
-    return 1.0;
+  else if ( val < -1.0 )
+    return -1.0;
   return val;
 }
 
 template <typename T >
 T cos_theta_clamp( const T v0[3], const T v1[3], T scale ) {
-  T val = ( v0[0] * v1[0] + v0[1] * v1[1] + v0[2] * v1[2] ) * scale;
+  T val = dot( v0, v1 ) * scale;
   if ( val > 1.0 )
     return 1.0;
-  else if ( val < 1.0 )
-    return 1.0;
+  else if ( val < -1.0 )
+    return -1.0;
   return val;
 }
 

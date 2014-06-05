@@ -18,6 +18,7 @@
 #include <cassert>
 
 #define LEAN_REBO
+#define SEPARATE_CODE_FOR_PURE_C
 
 #include "nlist.h"
 
@@ -37,6 +38,7 @@ namespace OpenREBO {
     AIREBO( const string& filename, double cutR_LJ_sigma,
                 bool LJ_flag, bool torsion_flag, int max_REBO_neighbours ) {
       atom_list = nullptr;
+      rebo_atom_list = nullptr;
 
       total_energy = 0.0;
       energy_REBO = 0.0;

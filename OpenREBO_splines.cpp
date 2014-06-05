@@ -10,8 +10,7 @@ namespace OpenREBO {
   const int DIM = 4;
 
   double AIREBO::gSpline( double costh, double Nij, int typei ) {
-    double coeffs[6], g1, g2;
-    double cut = 0.0, g = 0.0;
+    double coeffs[6], coeffs2[6], g2;
 
     int i, j;
 
@@ -21,58 +20,40 @@ namespace OpenREBO {
       if ( costh > gCdom[4] )
         costh = gCdom[4];
       if ( Nij >= NCmax ) {
-        for( i = 0; i < 4; i++ ) {
-          if ( ( costh >= gCdom[i] ) && ( costh <= gCdom[i + 1] ) ) {
+        for( i = 0; i < 4; i++ )
+          if ( costh >= gCdom[i] && costh <= gCdom[i + 1] )
             for( j = 0; j < 6; j++ )
               coeffs[j] = gC2[i][j];
-          }
-        }
-        g2 = Sp5th( costh, coeffs );
-        g = g2;
+        return Sp5th( costh, coeffs );
       }
       if ( Nij <= NCmin ) {
-        for( i = 0; i < 4; i++ ) {
-          if ( ( costh >= gCdom[i] ) && ( costh <= gCdom[i + 1] ) ) {
+        for( i = 0; i < 4; i++ )
+          if ( costh >= gCdom[i] && costh <= gCdom[i + 1] )
             for( j = 0; j < 6; j++ )
               coeffs[j] = gC1[i][j];
-          }
-        }
-        g1 = Sp5th( costh, coeffs );
-        g = g1;
+        return Sp5th( costh, coeffs );
       }
-      if ( ( Nij > NCmin ) && ( Nij < NCmax ) ) {
-        for( i = 0; i < 4; i++ ) {
-          if ( ( costh >= gCdom[i] ) && ( costh <= gCdom[i + 1] ) ) {
-            for( j = 0; j < 6; j++ )
-              coeffs[j] = gC1[i][j];
+      // in both bounds
+      for( i = 0; i < 4; i++ )
+        if ( costh >= gCdom[i] && costh <= gCdom[i + 1] )
+          for( j = 0; j < 6; j++ ) {
+            coeffs[j] = gC1[i][j];
+            coeffs2[j] = gC2[i][j];
           }
-        }
-        g1 = Sp5th( costh, coeffs );
-        for( i = 0; i < 4; i++ ) {
-          if ( ( costh >= gCdom[i] ) && ( costh <= gCdom[i + 1] ) ) {
-            for( j = 0; j < 6; j++ )
-              coeffs[j] = gC2[i][j];
-          }
-        }
-        g2 = Sp5th( costh, coeffs );
-        cut = SpNC( Nij );
-        g = g2 + cut * ( g1 - g2 );
-      }
-    } else /*if ( typei == 1 )*/ { // central atom is Hydrogen
-      if ( costh < gHdom[0] )
-        costh = gHdom[0];
-      if ( costh > gHdom[3] )
-        costh = gHdom[3];
-      for( i = 0; i < 3; i++ ) {
-        if ( ( costh >= gHdom[i] ) && ( costh <= gHdom[i + 1] ) ) {
-          for( j = 0; j < 6; j++ )
-            coeffs[j] = gH[i][j];
-        }
-      }
-      g = Sp5th( costh, coeffs );
+      g2 = Sp5th( costh, coeffs2 );
+      return g2 + SpNC( Nij ) * ( Sp5th( costh, coeffs ) - g2 );
     }
 
-    return g;
+    // central atom is Hydrogen
+    if ( costh < gHdom[0] )
+      costh = gHdom[0];
+    if ( costh > gHdom[3] )
+      costh = gHdom[3];
+    for( i = 0; i < 3; i++ )
+      if ( costh >= gHdom[i] && costh <= gHdom[i + 1] )
+        for( j = 0; j < 6; j++ )
+          coeffs[j] = gH[i][j];
+    return Sp5th( costh, coeffs );
   }
 
   double AIREBO::PijSpline( double NijC, double NijH, int typei, int typej ) {
@@ -284,17 +265,11 @@ namespace OpenREBO {
 
   double AIREBO::Sp5th( double x, double *coeffs ) {
     double f;
-    const double x2 = x * x;
-    const double x3 = x2 * x;
-
-    f = coeffs[0];
-    f += coeffs[1] * x;
-    f += coeffs[2] * x2;
-    f += coeffs[3] * x3;
-    f += coeffs[4] * x2 * x2;
-    f += coeffs[5] * x2 * x3;
-
-    return f;
+    for( int i = 5; i < 0 ; i-- ) {
+      f += coeffs[i];
+      f *= x;
+    }
+    return f + coeffs[0];
   }
 
   double AIREBO::Spbicubic( double x, double y, double *coeffs ) {

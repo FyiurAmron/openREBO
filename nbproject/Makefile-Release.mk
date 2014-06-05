@@ -48,8 +48,8 @@ OBJECTFILES= \
 CFLAGS=
 
 # CC Compiler Flags
-CCFLAGS=
-CXXFLAGS=
+CCFLAGS=-ffast-math -DNDEBUG -march=native
+CXXFLAGS=-ffast-math -DNDEBUG -march=native
 
 # Fortran Compiler Flags
 FFLAGS=
@@ -71,37 +71,37 @@ ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/airebo.exe: ${OBJECTFILES}
 ${OBJECTDIR}/OpenREBO.o: OpenREBO.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO.o OpenREBO.cpp
+	$(COMPILE.cc) -O3 -Wall -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO.o OpenREBO.cpp
 
 ${OBJECTDIR}/OpenREBO_E_LJ.o: OpenREBO_E_LJ.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO_E_LJ.o OpenREBO_E_LJ.cpp
+	$(COMPILE.cc) -O3 -Wall -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO_E_LJ.o OpenREBO_E_LJ.cpp
 
 ${OBJECTDIR}/OpenREBO_E_REBO.o: OpenREBO_E_REBO.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO_E_REBO.o OpenREBO_E_REBO.cpp
+	$(COMPILE.cc) -O3 -Wall -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO_E_REBO.o OpenREBO_E_REBO.cpp
 
 ${OBJECTDIR}/OpenREBO_E_Torsion.o: OpenREBO_E_Torsion.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO_E_Torsion.o OpenREBO_E_Torsion.cpp
+	$(COMPILE.cc) -O3 -Wall -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO_E_Torsion.o OpenREBO_E_Torsion.cpp
 
 ${OBJECTDIR}/OpenREBO_splines.o: OpenREBO_splines.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO_splines.o OpenREBO_splines.cpp
+	$(COMPILE.cc) -O3 -Wall -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenREBO_splines.o OpenREBO_splines.cpp
 
 ${OBJECTDIR}/main.o: main.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
+	$(COMPILE.cc) -O3 -Wall -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/main.o main.cpp
 
 ${OBJECTDIR}/nlist.o: nlist.cpp 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/nlist.o nlist.cpp
+	$(COMPILE.cc) -O3 -Wall -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/nlist.o nlist.cpp
 
 # Subprojects
 .build-subprojects:

@@ -26,7 +26,7 @@ namespace OpenREBO {
   public:
     int target_nr;
     double v[3]; // x, y, z;
-    double r, r_sq, inv_r, sp_rc[TYPE_COUNT], sp_rcP[TYPE_COUNT];
+    double r, r_sq, r_inv, sp_rc[TYPE_COUNT], sp_rcP[TYPE_COUNT];
   };
 
   class neighbor_tracker {
@@ -45,12 +45,17 @@ namespace OpenREBO {
 
   };
 
-  class atom : public neighbor_tracker {
+  class atom {
   public:
+    int neighbor_count;
+    bond* neighbor_bonds;
+
     int type;
     double nC, nH, nTotal;
 
-    atom( int atom_type, int neighbor_count ) : neighbor_tracker( neighbor_count ) {
+    atom( int atom_type, int max_neighbor_count ) {
+      neighbor_bonds = new bond[max_neighbor_count];
+      this->neighbor_count = 0;
       assert( atom_type == 0 || atom_type == 1 ); // note: 0 for C, 1 for H *by contract*; -1 (LAMMPS NULL) disallowed
       type = atom_type;
       nC = 0.0;
@@ -59,8 +64,11 @@ namespace OpenREBO {
     }
 
     virtual ~atom( ) {
+      /*
       for( int i = 0; i < neighbor_count; i++ )
         delete neighbor_bonds[i];
+       */
+      delete [] neighbor_bonds;
     }
 
     atom& operator =(const atom& right ) = delete;
@@ -71,26 +79,31 @@ namespace OpenREBO {
     atom** atoms;
     int atom_count;
     const AIREBO* my_ff;
+    int mixed_type_flag;
 
     NList( const string& filename, const AIREBO* my_ff ) {
       this->my_ff = my_ff;
-      ifstream ifs( filename );
-      atoms = read_list_from( ifs );
+      mixed_type_flag = 0;
+      //ifstream ifs( filename );
+      //atoms = read_list_from( ifs );
+      FILE* fp = fopen( filename.c_str( ), "r" );
+      atoms = fscanf_list( fp );
+      fclose( fp );
     }
 
-    /*
-    NList( istream& is ) {
-      atoms = read_list_from( is );
-    }
-     */
     virtual ~NList( ) {
       for( int i = 0; i < atom_count; i++ )
         delete atoms[i];
       delete [] atoms;
     }
 
+    bool is_pure_C( ) {
+      return mixed_type_flag == 0;
+    }
+
   private:
-    atom** read_list_from( istream& is );
+    atom** read_list_from_stream( istream& is );
+    atom** fscanf_list( FILE* fp );
   };
 
   class RNList {
