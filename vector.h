@@ -79,5 +79,10 @@ T cos_theta_clamp( const T v0[3], const T v1[3], T scale ) {
   return val;
 }
 
+template <typename T >
+T cos_theta( const T v0[3], const T v1[3], T scale ) {
+  return dot( v0, v1 ) * scale;
+}
+
 #endif	/* VECTOR_H */
 

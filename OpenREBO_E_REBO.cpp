@@ -12,6 +12,7 @@ namespace OpenREBO {
     rebo_atom_list = new RNList( atom_list->atom_count, max_REBO_neighbours );
 
     int i_type, j_type, tmp;
+    double r;
 
     atom *atom_i;
     neighbor_tracker* nt_i;
@@ -27,10 +28,12 @@ namespace OpenREBO {
         tmp = 0;
         for( int j = 0, max = atom_i->neighbor_count; j < max; j++ ) {
           bond &b = atom_i->neighbor_bonds[j];
-          if ( b.r_sq >= rcMaxSqIJ )
+          r = length_sq( b.v );
+          if ( r >= rcMaxSqIJ )
             continue;
 
           nt_i_bonds[tmp] = &b;
+          b.r_sq = r;
           b.r = sqrt( b.r_sq );
           b.r_inv = 1.0 / b.r;
           b.sp_rc[0] = SpRC( b.r, 0, 0 );
@@ -56,10 +59,12 @@ namespace OpenREBO {
           bond &b = atom_i->neighbor_bonds[j];
           j_type = atom_list->atoms[b.target_nr]->type;
 
-          if ( b.r_sq >= rcMaxSqI[j_type] )
+          r = length_sq( b.v );
+          if ( r >= rcMaxSqI[j_type] )
             continue;
 
           nt_i_bonds[tmp] = &b;
+          b.r_sq = r;
           b.r = sqrt( b.r_sq );
           b.r_inv = 1.0 / b.r;
           for( int i = 0; i < TYPE_COUNT; i++ ) {
@@ -82,7 +87,7 @@ namespace OpenREBO {
 #endif
   }
 
-//#undef SEPARATE_CODE_FOR_PURE_C
+  //#undef SEPARATE_CODE_FOR_PURE_C
 
   double AIREBO::E_REBO( ) {
     int i_type, j_type, j_nr;
@@ -119,6 +124,7 @@ namespace OpenREBO {
 
           eREBO += w_ij * ( 1.0 + Q00 * b->r_inv ) * A00 * exp( alpha00 * r_ij )
                   + bond_order( i, j_nr, b ) * VA;
+          if ( i < 10 ) cout << eREBO << endl; // DEBUG
         }
       }
     } else {
@@ -179,7 +185,7 @@ namespace OpenREBO {
       i_type = atom_i->type;
       rho_bi = r12 - b2->r;
       w_bi = b2->sp_rc[i_type];
-      Etmp += gSpline( cos_theta_clamp( r12_vec, b2->v, r12_inv * b2->r_inv ), NTotal, type1 )
+      Etmp += gSpline( cos_theta( r12_vec, b2->v, r12_inv * b2->r_inv ), NTotal, type1 )
               * ( ( type1 == 1 ) ?
               ( w_bi * exp( 4.0 * ( ( i_type != type2 ) ? ( rho[i_type][1] - rho[type2][1] + rho_bi ) : rho_bi ) ) )
               : w_bi );
@@ -242,7 +248,7 @@ namespace OpenREBO {
     bond *b2, *b3;
     double Etmp = 0.0, EwTmp,
             b2_r_inv, b3_r_inv, r12b2_inv, r12b3_inv,
-            cos321, sin321, cos234, sin234, om1234;
+            dot321, dot234, cos321, sin321, cos234, sin234, om1234;
     double rTmp_vec[3], *b2_v;
     int a_i, a_j;
     int max_j = nt2->neighbor_count;
@@ -255,7 +261,8 @@ namespace OpenREBO {
       r12b2_inv = b2_r_inv * r12_inv;
       b2_v = b2->v;
 
-      cos321 = cos_theta_clamp( b2_v, r12_vec, r12b2_inv );
+      dot321 = dot( b2_v, r12_vec );
+      cos321 = dot321 * r12b2_inv;
       sin321 = cos321 * cos321;
       if ( sin321 == 1.0 )
         continue;
@@ -274,16 +281,17 @@ namespace OpenREBO {
         if ( a_j == a1 || a_j == a_i )
           continue;
 
-        cos234 = cos_theta_clamp( b3->v, r21_vec, r12b3_inv );
+        dot234 = dot( b3->v, r21_vec );
+        cos234 = dot234 * r12b3_inv;
         sin234 = cos234 * cos234;
         if ( sin234 == 1.0 )
           continue;
         sin234 = sqrt( 1.0 - sin234 );
 
-        //cross( cross321, r21_vec, b2_v );
-        //cross( cross234, r12_vec, b3->v );
-        //om1234 = dot( cross321, cross234 ) * b2_inv_r * b3->inv_r * inv_r12 / ( sin321 * sin234 );
-        om1234 = ( r12 * cos321 * cos234 - dot( b2_v, b3->v ) * b2_r_inv * b3_r_inv ) / ( sin321 * sin234 );
+        double cross321[3], cross234[3];
+        cross( cross321, r21_vec, b2_v );
+        cross( cross234, b3->v, r21_vec );
+        om1234 = ( dot234 * dot321 * r12_inv * r12_inv + dot( b2_v, b3->v ) ) * b2_r_inv * b3_r_inv / ( sin321 * sin234 );
 
         sum( rTmp_vec, r12_vec, b3->v );
         Etmp += EwTmp * ( 1.0 - om1234 * om1234 ) * b3->sp_rcP[atom_list->atoms[a_j]->type]

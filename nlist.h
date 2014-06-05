@@ -78,16 +78,14 @@ namespace OpenREBO {
   public:
     atom** atoms;
     int atom_count;
-    const AIREBO* my_ff;
     int mixed_type_flag;
 
-    NList( const string& filename, const AIREBO* my_ff ) {
-      this->my_ff = my_ff;
+    NList( const string& filename, int max_REBO_neighbors ) {
       mixed_type_flag = 0;
       //ifstream ifs( filename );
       //atoms = read_list_from( ifs );
       FILE* fp = fopen( filename.c_str( ), "r" );
-      atoms = fscanf_list( fp );
+      atoms = fscanf_list( fp, max_REBO_neighbors );
       fclose( fp );
     }
 
@@ -103,7 +101,7 @@ namespace OpenREBO {
 
   private:
     atom** read_list_from_stream( istream& is );
-    atom** fscanf_list( FILE* fp );
+    atom** fscanf_list( FILE* fp, int max_REBO_neighbors );
   };
 
   class RNList {

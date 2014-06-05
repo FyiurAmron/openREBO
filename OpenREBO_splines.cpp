@@ -10,7 +10,7 @@ namespace OpenREBO {
   const int DIM = 4;
 
   double AIREBO::gSpline( double costh, double Nij, int typei ) {
-    double coeffs[6], coeffs2[6], g2;
+    double coeffs[6] = { }, coeffs2[6] = { }, g2;
 
     int i, j;
 
@@ -115,12 +115,11 @@ namespace OpenREBO {
 
   double AIREBO::piRCSpline( double Nij, double Nji, double Nijconj, int typei, int typej ) {
     int x, y, z, i;
-    double piRC, coeffs[64] = { };
+    double coeffs[64] = { };
 
     x = 0;
     y = 0;
     z = 0;
-    piRC = 0.0;
 
     if ( ( typei == 0 ) && ( typej == 0 ) ) { // CC
       // if the inputs are out of bounds set them back to a point in bounds
@@ -219,44 +218,36 @@ namespace OpenREBO {
   }
 
   double AIREBO::TijSpline( double Nij, double Nji, double Nijconj ) {
-    bool done;
-    int x, y, z, i;
-    double Tijf, coeffs[64] = { };
-
-    x = 0;
-    y = 0;
-    z = 0;
-    i = 0;
-    Tijf = 0.0;
-    done = 0;
-
-    // if the inputs are out of bounds set them back to a point in bounds
     if ( Nij < Tijdom[0][0] )
       Nij = Tijdom[0][0];
-    if ( Nij > Tijdom[0][1] )
+    else if ( Nij > Tijdom[0][1] )
       Nij = Tijdom[0][1];
     if ( Nji < Tijdom[1][0] )
       Nji = Tijdom[1][0];
-    if ( Nji > Tijdom[1][1] )
+    else if ( Nji > Tijdom[1][1] )
       Nji = Tijdom[1][1];
     if ( Nijconj < Tijdom[2][0] )
       Nijconj = Tijdom[2][0];
-    if ( Nijconj > Tijdom[2][1] )
+    else if ( Nijconj > Tijdom[2][1] )
       Nijconj = Tijdom[2][1];
 
-    if ( ( fabs( Nij - floor( Nij ) ) < TOL ) && ( fabs( Nji - floor( Nji ) ) < TOL ) &&
-            ( fabs( Nijconj - floor( Nijconj ) ) < TOL ) )
+    if ( fabs( Nij - floor( Nij ) ) < TOL && fabs( Nji - floor( Nji ) ) < TOL &&
+            fabs( Nijconj - floor( Nijconj ) ) < TOL )
       return Tf[(int) Nij][(int) Nji][(int) Nijconj];
 
-    for( i = 0; i < Tijdom[0][1]; i++ )
+    int x = 0, y = 0, z = 0, i, max;
+
+    for( i = 0, max = Tijdom[0][1]; i < max; i++ )
       if ( Nij >= i && Nij <= i + 1 )
         x = i;
-    for( i = 0; i < Tijdom[1][1]; i++ )
+    for( i = 0, max = Tijdom[1][1]; i < max; i++ )
       if ( Nji >= i && Nji <= i + 1 )
         y = i;
-    for( i = 0; i < Tijdom[2][1]; i++ )
+    for( i = 0, max = Tijdom[2][1]; i < max; i++ )
       if ( Nijconj >= i && Nijconj <= i + 1 )
         z = i;
+
+    double coeffs[64];
     for( i = 0; i < 64; i++ )
       coeffs[i] = Tijc[x][y][z][i];
 
@@ -264,8 +255,8 @@ namespace OpenREBO {
   }
 
   double AIREBO::Sp5th( double x, double *coeffs ) {
-    double f;
-    for( int i = 5; i < 0 ; i-- ) {
+    double f = 0.0;
+    for( int i = 5; i > 0; i-- ) {
       f += coeffs[i];
       f *= x;
     }

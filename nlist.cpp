@@ -8,6 +8,7 @@
 #include "nlist.h"
 
 namespace OpenREBO {
+
   int get_uint( FILE* fp ) {
     char c;
     int i = 0;
@@ -57,7 +58,8 @@ namespace OpenREBO {
     return sign ? -d - d2 * divs[div_nr] : d + d2 * divs[div_nr];
   }
 
-  atom** NList::fscanf_list( FILE* fp ) {
+#if 0
+  atom** NList::fscanf_list( FILE* fp, int max_REBO_neighbors ) { // base version
     atom ** a, *at;
     double* v;
     int atom_nr, atom_type, atom_neighbor_cnt;
@@ -66,7 +68,7 @@ namespace OpenREBO {
     for( int i = 0; i < atom_count; i++ ) {
       fscanf( fp, "atom %d type %d\nnumber_of_neighbours %d\nneighbours:\n", &atom_nr, &atom_type, &atom_neighbor_cnt );
       mixed_type_flag |= atom_type;
-      assert( atom_neighbor_cnt <= my_ff->max_REBO_neighbours ); // use static bonds instead!
+      assert( atom_neighbor_cnt <= max_REBO_neighbours );
       at = new atom( atom_type, atom_neighbor_cnt );
       a[atom_nr] = at;
       for( int j = 0; j < atom_neighbor_cnt; j++ ) {
@@ -78,11 +80,37 @@ namespace OpenREBO {
         for( int k = 0; k < 3; k++ )
           v[k] = get_double( fp ); // get_XXX totals @ 1500 clocks
         assert( atom_nr != b.target_nr );
-        b.r_sq = length_sq( b.v ); // the rest is evaluated lazily when appearing in REBO neighbourhood
         at->neighbor_count++;
       }
     }
     return a;
   }
-
+#else
+   atom** NList::fscanf_list( FILE* fp, int max_REBO_neighbors ) {
+    atom ** a, *at;
+    double* v;
+    int atom_nr, atom_type, atom_neighbor_cnt, j;
+    fscanf( fp, "natoms %d\n", &atom_count );
+    a = new atom*[atom_count];
+    for( int i = 0; i < atom_count; i++ ) {
+      fscanf( fp, "atom %d type %d\nnumber_of_neighbours %d\nneighbours:\n", &atom_nr, &atom_type, &atom_neighbor_cnt );
+      mixed_type_flag |= atom_type;
+      assert( atom_neighbor_cnt <= max_REBO_neighbors );
+      at = new atom( atom_type, atom_neighbor_cnt );
+      a[atom_nr] = at;
+      for( j = 0; j < atom_neighbor_cnt; j++ ) {
+        bond& b = at->neighbor_bonds[j];
+        //b = new bond( ); // 1000 clocks @ large
+        v = b.v;
+        //fscanf( fp, "%d %lf %lf %lf\n", &(b->target_nr), &v[0], &v[1], &v[2] ); // 6500 clocks ! ! !
+        b.target_nr = get_uint( fp );
+        for( int k = 0; k < 3; k++ )
+          v[k] = get_double( fp ); // get_XXX totals @ 1500 clocks
+        assert( atom_nr != b.target_nr );
+      }
+      at->neighbor_count = j;
+    }
+    return a;
+  }
+#endif
 }

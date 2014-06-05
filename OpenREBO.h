@@ -92,14 +92,8 @@ namespace OpenREBO {
         delete atom_list;
       if ( rebo_atom_list != nullptr )
         delete rebo_atom_list;
-      atom_list = new NList( filename, this );
+      atom_list = new NList( filename, max_REBO_neighbours );
     }
-
-    /*
-    void setList( NList* nl ) {
-      atom_list = nl;
-    }
-     */
 
     double getCutoffRadius( ) {
       return cutMax;
