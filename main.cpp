@@ -32,11 +32,15 @@ void OpenREBO_test( const string& s ) {
   cout << aff.getEnergyTotal( ) << endl;
 }
 
+const char* DEFAULT_NLISTS = "small.nlists";
+
 int main( int argc, char** argv ) {
   setbuf( stdout, NULL );
   ios::sync_with_stdio( false );
+  string input = string( ( argc > 1 ) ? argv[1] : DEFAULT_NLISTS );
+
   for( int i = 0; i < 1; i++ )
-    OpenREBO_test( "big.nlists" );
+    OpenREBO_test( input );
   cout << "total_read: " << total_read << endl
           << "total_compute: " << total_compute << endl;
 

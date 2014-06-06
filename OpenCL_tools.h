@@ -4,7 +4,7 @@
  *
  * Created on 6 czerwca 2014, 00:54
  */
-
+#if 0
 #ifndef OPENCL_TOOLS_H
 #define	OPENCL_TOOLS_H
 
@@ -12,7 +12,7 @@
 
 //#define __NO_STD_VECTOR // Use cl::vector instead of STL version
 //#include <CL/cl.hpp>
-  const int OPENCL_BUF_SIZE = 1024;
+const int OPENCL_BUF_SIZE = 1024;
 using std::cout;
 using std::endl;
 
@@ -32,26 +32,25 @@ public:
     ret = clGetPlatformIDs( pCnt, platformIDs, nullptr );
     ret = clGetDeviceIDs( platformIDs[0], CL_DEVICE_TYPE_GPU, 0, nullptr, &devCnt ); // select platform 0
     cl_device_id* deviceIDs = new cl_device_id[devCnt];
-    cl_context context = clCreateContext(0, devCnt, deviceIDs, nullptr, nullptr, nullptr );
+    cl_context context = clCreateContext( 0, devCnt, deviceIDs, nullptr, nullptr, nullptr );
   }
 
   static void printPlatforms( ) {
-    cl_uint pCnt;
-    ret = clGetPlatformIDs( 0, nullptr, &pCnt );
-    cl_platform_id* platformIDs = new cl_platform_id[pCnt];
-    ret = clGetPlatformIDs( pCnt, platformIDs, nullptr );
-    for( cl_uint i = 0; i < pCnt; ++i ) {
-      char buf[OPENCL_BUF_SIZE] = { };
+    cl::vector< cl::Platform > platformList;
+    cl::Platform::get( &platformList );
+    string buf;
+    for( int i = 0, max = platformList.size( ); i < max; i++ ) {
       cout << "Platform [" << i << "] : ";
-      ret = clGetPlatformInfo( platformIDs[i], CL_PLATFORM_NAME, OPENCL_BUF_SIZE, &buf, nullptr );
+      cl::Platform &p = platformList[i];
+      p.getInfo( (cl_platform_info) CL_PLATFORM_NAME, &buf );
       cout << buf << " - ";
-      ret = clGetPlatformInfo( platformIDs[i], CL_PLATFORM_VENDOR, OPENCL_BUF_SIZE, &buf, nullptr );
+      p.getInfo( (cl_platform_info) CL_PLATFORM_VENDOR, &buf );
       cout << buf << " ver. ";
-      ret = clGetPlatformInfo( platformIDs[i], CL_PLATFORM_VERSION, OPENCL_BUF_SIZE, &buf, nullptr );
+      p.getInfo( (cl_platform_info) CL_PLATFORM_VERSION, &buf );
       cout << buf << " ";
-      ret = clGetPlatformInfo( platformIDs[i], CL_PLATFORM_PROFILE, OPENCL_BUF_SIZE, &buf, nullptr );
+      p.getInfo( (cl_platform_info) CL_PLATFORM_PROFILE, &buf );
       cout << buf << " ";
-      ret = clGetPlatformInfo( platformIDs[i], CL_PLATFORM_EXTENSIONS, OPENCL_BUF_SIZE, &buf, nullptr );
+      p.getInfo( (cl_platform_info) CL_PLATFORM_EXTENSIONS, &buf );
       cout << buf << endl << endl;
     }
   }
@@ -83,3 +82,4 @@ public:
 
 #endif	/* OPENCL_TOOLS_H */
 
+#endif
