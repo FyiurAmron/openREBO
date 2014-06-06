@@ -8,7 +8,6 @@
 #ifndef AIREBO_FORCE_FIELD_H
 #define AIREBO_FORCE_FIELD_H
 
-#include <math.h>
 #include <cmath>
 #include <cstdlib>
 #include <fstream>

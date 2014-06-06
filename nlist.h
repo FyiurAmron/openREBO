@@ -22,8 +22,7 @@ namespace OpenREBO {
 
   class AIREBO;
 
-  class bond {
-  public:
+  struct bond {
     int target_nr;
     double v[3]; // x, y, z;
     double r, r_sq, r_inv, sp_rc[TYPE_COUNT], sp_rcP[TYPE_COUNT];

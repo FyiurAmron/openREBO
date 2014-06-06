@@ -35,6 +35,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/OpenCL_tools.o \
 	${OBJECTDIR}/OpenREBO.o \
 	${OBJECTDIR}/OpenREBO_E_LJ.o \
 	${OBJECTDIR}/OpenREBO_E_REBO.o \
@@ -67,6 +68,11 @@ LDLIBSOPTIONS=
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/airebo.exe: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/airebo ${OBJECTFILES} ${LDLIBSOPTIONS}
+
+${OBJECTDIR}/OpenCL_tools.o: OpenCL_tools.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O3 -Wall -std=c++11 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OpenCL_tools.o OpenCL_tools.cpp
 
 ${OBJECTDIR}/OpenREBO.o: OpenREBO.cpp 
 	${MKDIR} -p ${OBJECTDIR}

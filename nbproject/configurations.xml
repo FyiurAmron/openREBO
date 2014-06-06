@@ -4,6 +4,7 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <itemPath>OpenCL_tools.h</itemPath>
       <itemPath>OpenREBO.h</itemPath>
       <itemPath>const.h</itemPath>
       <itemPath>nlist.h</itemPath>
@@ -12,10 +13,12 @@
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
                    projectFiles="true">
+      <itemPath>REBO_neighbor.cl</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <itemPath>OpenCL_tools.cpp</itemPath>
       <itemPath>OpenREBO.cpp</itemPath>
       <itemPath>OpenREBO_E_LJ.cpp</itemPath>
       <itemPath>OpenREBO_E_REBO.cpp</itemPath>
@@ -49,6 +52,10 @@
           <standard>8</standard>
         </ccTool>
       </compileType>
+      <item path="OpenCL_tools.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="OpenCL_tools.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="OpenREBO.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="OpenREBO.h" ex="false" tool="3" flavor2="0">
@@ -60,6 +67,8 @@
       <item path="OpenREBO_E_Torsion.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="OpenREBO_splines.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="REBO_neighbor.cl" ex="false" tool="3" flavor2="0">
       </item>
       <item path="const.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -95,6 +104,10 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="OpenCL_tools.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="OpenCL_tools.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="OpenREBO.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="OpenREBO.h" ex="false" tool="3" flavor2="0">
@@ -106,6 +119,8 @@
       <item path="OpenREBO_E_Torsion.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="OpenREBO_splines.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="REBO_neighbor.cl" ex="false" tool="3" flavor2="0">
       </item>
       <item path="const.h" ex="false" tool="3" flavor2="0">
       </item>
