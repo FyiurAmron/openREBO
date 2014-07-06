@@ -1,5 +1,5 @@
 /*
-    File:   OpenREBO_E_LJ.cpp
+    File:   E_LJ.cpp
     Author: vaxquis
     based on LAMMPS implementation of AIREBO potential
  */

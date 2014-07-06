@@ -18,7 +18,6 @@ void OpenREBO_test( const string& s ) {
   clock_t t1;
   printf( "AIREBO test...\n" );
   AIREBO aff( "CH.airebo", 0.0, false, false, 256 );
-  //aff.readNList( "small.nlists" );
   t1 = clock( );
   aff.readNList( s );
   tmp = clock( ) - t1;
@@ -39,7 +38,7 @@ int main( int argc, char** argv ) {
   ios::sync_with_stdio( false );
   string input = string( ( argc > 1 ) ? argv[1] : DEFAULT_NLISTS );
 
-  for( int i = 0; i < 1; i++ )
+  for( int i = 0; i < 10; i++ )
     OpenREBO_test( input );
   cout << "total_read: " << total_read << endl
           << "total_compute: " << total_compute << endl;

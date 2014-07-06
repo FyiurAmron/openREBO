@@ -1,5 +1,5 @@
 /*
-    File:   OpenREBO_E_Torsion.cpp
+    File:   E_Torsion.cpp
     Author: vaxquis
     based on LAMMPS implementation of AIREBO potential
  */

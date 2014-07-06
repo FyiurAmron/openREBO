@@ -18,14 +18,15 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <itemPath>E_LJ.cpp</itemPath>
+      <itemPath>E_REBO_C.cpp</itemPath>
+      <itemPath>E_REBO_CH.cpp</itemPath>
+      <itemPath>E_Torsion.cpp</itemPath>
       <itemPath>OpenCL_tools.cpp</itemPath>
       <itemPath>OpenREBO.cpp</itemPath>
-      <itemPath>OpenREBO_E_LJ.cpp</itemPath>
-      <itemPath>OpenREBO_E_REBO.cpp</itemPath>
-      <itemPath>OpenREBO_E_Torsion.cpp</itemPath>
-      <itemPath>OpenREBO_splines.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
       <itemPath>nlist.cpp</itemPath>
+      <itemPath>splines.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -52,6 +53,14 @@
           <standard>8</standard>
         </ccTool>
       </compileType>
+      <item path="E_LJ.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="E_REBO_C.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="E_REBO_CH.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="E_Torsion.cpp" ex="false" tool="1" flavor2="0">
+      </item>
       <item path="OpenCL_tools.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="OpenCL_tools.h" ex="false" tool="3" flavor2="0">
@@ -59,14 +68,6 @@
       <item path="OpenREBO.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="OpenREBO.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="OpenREBO_E_LJ.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="OpenREBO_E_REBO.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="OpenREBO_E_Torsion.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="OpenREBO_splines.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="REBO_neighbor.cl" ex="false" tool="3" flavor2="0">
       </item>
@@ -77,6 +78,8 @@
       <item path="nlist.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="nlist.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="splines.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="vector.h" ex="false" tool="3" flavor2="0">
       </item>
@@ -94,7 +97,7 @@
         <ccTool>
           <developmentMode>6</developmentMode>
           <standard>8</standard>
-          <commandLine>-ffast-math -DNDEBUG -march=native</commandLine>
+          <commandLine>-ffast-math -DNDEBUG -march=native -pg</commandLine>
           <warningLevel>2</warningLevel>
         </ccTool>
         <fortranCompilerTool>
@@ -104,6 +107,14 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="E_LJ.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="E_REBO_C.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="E_REBO_CH.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="E_Torsion.cpp" ex="false" tool="1" flavor2="0">
+      </item>
       <item path="OpenCL_tools.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="OpenCL_tools.h" ex="false" tool="3" flavor2="0">
@@ -111,14 +122,6 @@
       <item path="OpenREBO.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="OpenREBO.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="OpenREBO_E_LJ.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="OpenREBO_E_REBO.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="OpenREBO_E_Torsion.cpp" ex="false" tool="1" flavor2="0">
-      </item>
-      <item path="OpenREBO_splines.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="REBO_neighbor.cl" ex="false" tool="3" flavor2="0">
       </item>
@@ -129,6 +132,8 @@
       <item path="nlist.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="nlist.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="splines.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="vector.h" ex="false" tool="3" flavor2="0">
       </item>

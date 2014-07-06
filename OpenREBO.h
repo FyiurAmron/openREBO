@@ -17,7 +17,6 @@
 #include <cassert>
 
 #define LEAN_REBO
-#define SEPARATE_CODE_FOR_PURE_C
 
 #include "nlist.h"
 
@@ -29,13 +28,15 @@ namespace OpenREBO {
   using std::istringstream;
   using std::cout;
 
+  const int SPL_DIM = 4;
+
   class AIREBO {
     friend class NList; // for the sake of SpXX
 
   public:
 
     AIREBO( const string& filename, double cutR_LJ_sigma,
-                bool LJ_flag, bool torsion_flag, int max_REBO_neighbours ) {
+            bool LJ_flag, bool torsion_flag, int max_REBO_neighbours ) {
       atom_list = nullptr;
       rebo_atom_list = nullptr;
 
@@ -65,35 +66,6 @@ namespace OpenREBO {
         delete rebo_atom_list;
     };
 
-    double compute( ) {
-      assert( atom_list != nullptr );
-
-      REBO_neighbours( );
-
-      energy_REBO = E_REBO( );
-#ifndef LEAN_REBO
-      energy_LJ = 0.0;
-      energy_torsion = 0.0;
-
-      if ( LJ_flag )
-        energy_LJ = E_LJ( );
-      if ( torsion_flag )
-        energy_torsion = E_Torsion( );
-#endif
-
-      total_energy = energy_REBO + energy_LJ + energy_torsion;
-
-      return total_energy;
-    }
-
-    void readNList( string filename ) {
-      if ( atom_list != nullptr )
-        delete atom_list;
-      if ( rebo_atom_list != nullptr )
-        delete rebo_atom_list;
-      atom_list = new NList( filename, max_REBO_neighbours );
-    }
-
     double getCutoffRadius( ) {
       return cutMax;
     }
@@ -113,6 +85,10 @@ namespace OpenREBO {
     double getEnergyTorsion( ) {
       return energy_torsion;
     }
+
+    double compute( );
+    void readNList( string filename );
+
 
   private:
     bool LJ_flag, torsion_flag;
@@ -172,7 +148,13 @@ namespace OpenREBO {
     double piCCf[5][5][11], piCCdfdx[5][5][11], piCCdfdy[5][5][11], piCCdfdz[5][5][11];
     double piCHf[5][5][11], piCHdfdx[5][5][11], piCHdfdy[5][5][11], piCHdfdz[5][5][11];
     double piHHf[5][5][11], piHHdfdx[5][5][11], piHHdfdy[5][5][11], piHHdfdz[5][5][11];
-    double Tf[5][5][10], Tdfdx[5][5][10], Tdfdy[5][5][10], Tdfdz[5][5][10];
+    double Tf[5][5][11], Tdfdx[5][5][11], Tdfdy[5][5][11], Tdfdz[5][5][11]; // 3rd dim is 10 actually, this is only for compiler ease
+
+    // spline helpers
+    double gSplineC1_low, gSplineC1_hi;
+    double gSplineC2_low, gSplineC2_hi;
+    double gSplineH_low, gSplineH_hi;
+    double gSplineC_low_delta, gSplineC_hi_delta;
 
     void readSplineGC( ifstream& ifs, double Vdom[5], double v1[4][6], double v2[4][6] );
     void readSplineGH( ifstream& ifs, double Vdom[4], double v[3][6] );
@@ -181,24 +163,43 @@ namespace OpenREBO {
 
     void readParameters( const string& file_name );
     void initializeSplines( );
+    void initializeSplines2( );
 
     void allocateMemory( );
     void deallocateMemory( );
 
     double gSpline( double costh, double Nij, int typei );
+    double gSplineC( double costh, double Nij );
+    double gSplineH( double costh );
+
     double PijSpline( double NijC, double NijH, int typei, int typej );
+    double PijSplineC_only( double NijC );
+
+    double TricubicSplineMain( double Nij, double Nji, double Nijconj,
+                               double dom[3][2], double coeff_f[5][5][11], double coeff[SPL_DIM][SPL_DIM][9][SPL_DIM*SPL_DIM*SPL_DIM] );
+
     double piRCSpline( double Nij, double Nji, double Nijconj, int typei, int typej );
+    double piRCSplineCC( double Nij, double Nji, double Nijconj );
+    double piRCSplineCH( double Nij, double Nji, double Nijconj );
+    double piRCSplineHH( double Nij, double Nji, double Nijconj );
+
     double TijSpline( double Nij, double Nji, double Nijconj );
 
     double Sp5th( double x, double *coeffs );
     double Spbicubic( double x, double y, double *coeffs );
     double Sptricubic( double x, double y, double z, double *coeffs );
 
-    void REBO_neighbours( );
-    double E_REBO( );
-    double bond_order( int i, int j, const bond* b );
-    double bond_order_1( int a1, int a2, int type1, int type2, const double r12_vec[3], double r12, double inv_r12,
-          double NC, double NH, double NTotal, double &p, const neighbor_tracker *nt );
+    void REBO_neighbours_C( );
+    double E_REBO_C( );
+    double bond_order_C( int i, int j, const bond* b );
+    double bond_order_1_C( int a1, int a2, const double r12_vec[3], double r12, double inv_r12,
+                           double NC, double &p, const neighbor_tracker *nt );
+
+    void REBO_neighbours_CH( );
+    double E_REBO_CH( );
+    double bond_order_CH( int i, int j, const bond* b );
+    double bond_order_1_CH( int a1, int a2, int type1, int type2, const double r12_vec[3], double r12, double inv_r12,
+                            double NC, double NH, double NTotal, double &p, const neighbor_tracker *nt );
 
 #ifndef LEAN_REBO
     double E_LJ( );

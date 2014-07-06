@@ -84,6 +84,8 @@ namespace OpenREBO {
       //ifstream ifs( filename );
       //atoms = read_list_from( ifs );
       FILE* fp = fopen( filename.c_str( ), "r" );
+      if ( fp == nullptr )
+        return;
       atoms = fscanf_list( fp, max_REBO_neighbors );
       fclose( fp );
     }

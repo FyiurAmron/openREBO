@@ -1,1 +1,1 @@
-@dist\Release\MinGW_2014-Windows\airebo.exe > results_%RANDOM%.txt
+@dist\Release\MinGW_2014-Windows\airebo.exe big.nlists > results_%RANDOM%.txt

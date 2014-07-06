@@ -3,6 +3,36 @@
 #include "OpenREBO.h"
 
 namespace OpenREBO {
+
+  double AIREBO::compute( ) {
+    assert( atom_list != nullptr );
+
+    //atom_list->mixed_type_flag = true; //DEBUG
+    if ( atom_list->is_pure_C( ) ) {
+      REBO_neighbours_C( );
+      energy_REBO = E_REBO_C( );
+    } else {
+      REBO_neighbours_CH( );
+      energy_REBO = E_REBO_CH( );
+    }
+#ifndef LEAN_REBO
+    energy_LJ = ( LJ_flag ) ? E_LJ( ) : 0;
+    energy_torsion = ( torsion_flag ) ? E_Torsion( ) : 0;
+#endif
+
+    total_energy = energy_REBO + energy_LJ + energy_torsion;
+
+    return total_energy;
+  }
+
+  void AIREBO::readNList( string filename ) {
+    if ( atom_list != nullptr )
+      delete atom_list;
+    if ( rebo_atom_list != nullptr )
+      delete rebo_atom_list;
+    atom_list = new NList( filename, max_REBO_neighbours );
+  }
+
   void AIREBO::readParameters( const string& file_name ) {
     ifstream file;
     file.open( file_name.c_str( ) );
@@ -166,6 +196,7 @@ namespace OpenREBO {
     int nr_domains = getLineToInt( ifs );
     for( int i = 0; i < nr_domains; i++ )
       Vdom[i] = getLineToDouble( ifs );
+    //assert(Vdom[i] > Vdom[i]-1);
     getLine( ifs );
     nr_domains--;
     for( int i = 0; i < nr_domains; i++ )
@@ -183,6 +214,7 @@ namespace OpenREBO {
     int nr_domains = getLineToInt( ifs );
     for( int i = 0; i < nr_domains; i++ )
       Vdom[i] = getLineToDouble( ifs );
+    //assert(Vdom[i] > Vdom[i]-1);
     getLine( ifs );
     nr_domains--;
     for( int i = 0; i < nr_domains; i++ )
@@ -198,6 +230,7 @@ namespace OpenREBO {
     for( int i = 0; i < max; i++ )
       for( int j = 0; j < max; j++ )
         Vdom[i][j] = getLineToDouble( ifs );
+    //assert(Vdom[i][j] > Vdom[i][j-1]);
     getLine( ifs );
     for( int i = 0, max_i = (int) Vdom[0][1]; i < max_i; i++ )
       for( int j = 0, max_j = (int) Vdom[1][1]; j < max_j; j++ )
@@ -212,6 +245,7 @@ namespace OpenREBO {
     for( int i = 0, max_i = nr_domains / 2; i < max_i; i++ )
       for( int j = 0, max_j = nr_domains / 3; j < max_j; j++ )
         Vdom[i][j] = getLineToDouble( ifs );
+    //assert(Vdom[i][j] > Vdom[i][j-1]);
     getLine( ifs );
     for( int i = 0, max_i = (int) Vdom[0][1]; i < max_i; i++ )
       for( int j = 0, max_j = (int) Vdom[1][1]; j < max_j; j++ )
@@ -423,6 +457,19 @@ namespace OpenREBO {
     Tf[2][2][1] = -0.035140;
     for( i = 2; i < 10; i++ )
       Tf[2][2][i] = -0.0040480;
+
+    initializeSplines2( );
+  }
+
+  void AIREBO::initializeSplines2( ) {
+    gSplineC1_low = Sp5th( gCdom[0], gC1[0] );
+    gSplineC1_hi = Sp5th( gCdom[4], gC1[3] );
+    gSplineC2_low = Sp5th( gCdom[0], gC2[0] );
+    gSplineC2_hi = Sp5th( gCdom[4], gC2[3] );
+    gSplineH_low = Sp5th( gHdom[0], gH[0] );
+    gSplineH_hi = Sp5th( gHdom[3], gH[2] );
+    gSplineC_low_delta = gSplineC1_low - gSplineC2_low;
+    gSplineC_hi_delta = gSplineC1_hi - gSplineC2_hi;
   }
 
 }
