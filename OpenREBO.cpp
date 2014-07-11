@@ -80,6 +80,12 @@ namespace OpenREBO {
     pi_div_delta_RCP[1][0] = pi_div_delta_RC[0][1];
     pi_div_delta_RCP[1][1] = PI / ( rcMaxP[1][1] - rcMin[1][1] );
 
+    rcMin_CC = rcMin[0][0];
+    rcMax_CC = rcMax[0][0];
+    rcMaxP_CC = rcMaxP[0][0];
+    pi_div_delta_RC_CC = pi_div_delta_RC[0][0];
+    pi_div_delta_RCP_CC = pi_div_delta_RCP[0][0];
+
     pi_div_delta_N = PI / ( Nmax - Nmin );
     pi_div_delta_NC = PI / ( NCmax - NCmin );
 

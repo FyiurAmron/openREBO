@@ -108,6 +108,7 @@ namespace OpenREBO {
     double rcMin[TYPE_COUNT][TYPE_COUNT], rcMax[TYPE_COUNT][TYPE_COUNT];
     double rcMaxSq[TYPE_COUNT][TYPE_COUNT], rcMaxP[TYPE_COUNT][TYPE_COUNT];
     double pi_div_delta_RC[TYPE_COUNT][TYPE_COUNT], pi_div_delta_RCP[TYPE_COUNT][TYPE_COUNT];
+    double rcMin_CC, rcMax_CC, rcMaxP_CC, pi_div_delta_RC_CC, pi_div_delta_RCP_CC;
 
     double smin;
     double Nmin, Nmax;
@@ -265,6 +266,23 @@ namespace OpenREBO {
       if ( tmp_cutmax > cutMax )
         cutMax = tmp_cutmax;
     }
+
+    double SpRC_CC( double Xij ) const {
+      if ( Xij >= rcMax_CC )
+        return 0.0;
+      if ( Xij <= rcMin_CC )
+        return 1.0;
+      return 0.5 + 0.5 * cos( ( Xij - rcMin_CC ) * pi_div_delta_RC_CC );
+    }
+
+    double SpRCP_CC( double Xij ) const {
+      if ( Xij >= rcMaxP_CC )
+        return 0.0;
+      if ( Xij <= rcMin_CC )
+        return 1.0;
+      return 0.5 + 0.5 * cos( ( Xij - rcMin_CC ) * pi_div_delta_RCP_CC );
+    }
+
 
     double SpRC( double Xij, int type1, int type2 ) const {
       double Xmin = rcMin[type1][type2];

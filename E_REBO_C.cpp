@@ -35,8 +35,8 @@ namespace OpenREBO {
         b.r_sq = r;
         b.r = sqrt( b.r_sq );
         b.r_inv = 1.0 / b.r;
-        b.sp_rc[0] = SpRC( b.r, 0, 0 );
-        b.sp_rcP[0] = SpRCP( b.r, 0, 0 );
+        b.sp_rc[0] = SpRC_CC( b.r );
+        b.sp_rcP[0] = SpRCP_CC( b.r );
 
         atom_i->nC += b.sp_rc[0];
         tmp++;
